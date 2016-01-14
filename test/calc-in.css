@@ -1,0 +1,7 @@
+:root {
+  --msu-ratios: 1.5;
+}
+
+example {
+  value: calc(1msu * 1rem);
+}

@@ -1,0 +1,8 @@
+:root {
+  --msu-bases: 1 1.5;
+  --msu-ratios: 2;
+}
+
+example {
+  value: 0msu 1msu 2msu 3msu;
+}
