@@ -1,5 +1,5 @@
 import fs from 'fs'
-import plugin from '../dist'
+import plugin from '../'
 import postcss from 'postcss'
 import test from 'ava'
 

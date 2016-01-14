@@ -16,6 +16,7 @@
     "url": "https://github.com/erikjung/postcss-modular-scale-unit/issues"
   },
   "homepage": "https://github.com/erikjung/postcss-modular-scale-unit",
+  "main": "dist/index.js",
   "dependencies": {
     "modular-scale": "^4.4.1",
     "postcss": "^5.0.13"
