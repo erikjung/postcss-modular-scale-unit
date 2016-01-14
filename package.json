@@ -29,6 +29,7 @@
   "scripts": {
     "build": "babel src/index.js -o dist/index.js",
     "lint": "standard src/index.js",
-    "test": "ava test/test.js"
+    "test": "ava test/test.js",
+    "prepublish": "npm run build && npm test"
   }
 }
