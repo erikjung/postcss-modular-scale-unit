@@ -22,6 +22,14 @@ function plugin ({ name = 'msu' } = {}) {
       if (parentSelector === ':root' && propKey) {
         msOptions[propKey] = decl.value.split(' ')
       }
+    
+      if (parentSelector === ':root' && /^--modular-scale$/.test(decl.prop)) {
+        let [, ratios, bases] = decl.value.match(/^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/) || []
+        // TODO: need to support <ratio> type (e.g. 4/3)
+        ratios = ratios.split(' ')
+        bases = bases.split(' ')
+        msOptions = { ratios, bases }
+      }
     })
 
     /**

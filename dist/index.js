@@ -44,6 +44,20 @@ function plugin() {
       if (parentSelector === ':root' && propKey) {
         msOptions[propKey] = decl.value.split(' ');
       }
+
+      if (parentSelector === ':root' && /^--modular-scale$/.test(decl.prop)) {
+        var _ref4 = decl.value.match(/^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/) || [];
+
+        var _ref5 = _slicedToArray(_ref4, 3);
+
+        var ratios = _ref5[1];
+        var bases = _ref5[2];
+        // TODO: need to support <ratio> type (e.g. 4/3)
+
+        ratios = ratios.split(' ');
+        bases = bases.split(' ');
+        msOptions = { ratios: ratios, bases: bases };
+      }
     });
 
     /**
