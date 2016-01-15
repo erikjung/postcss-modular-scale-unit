@@ -45,3 +45,9 @@ test('Ignores invalid unit name', t => {
   var expected = readFile('./invalid-out.css')
   return run(t, input, expected)
 })
+
+test('Works with a custom unit name', t => {
+  var input = readFile('./customName-in.css')
+  var expected = readFile('./customName-out.css')
+  return run(t, input, expected, { name: 'mods' })
+})

@@ -1,8 +1,12 @@
 import postcss from 'postcss'
 import ModularScale from 'modular-scale'
 
-function plugin () {
+function plugin ({ name = 'msu' } = {}) {
   return css => {
+    var patterns = [
+      new RegExp(`^--${name}-(\\w+)`),
+      new RegExp(`-?\\d+${name}\\b`, 'g')
+    ]
     var msOptions = {}
     var ms
 
@@ -13,7 +17,7 @@ function plugin () {
      */
     css.walkDecls(decl => {
       var parentSelector = decl.parent.selector
-      var [, propKey] = decl.prop.match(/^--msu-(\w+)/) || []
+      var [, propKey] = decl.prop.match(patterns[0]) || []
 
       if (parentSelector === ':root' && propKey) {
         msOptions[propKey] = decl.value.split(' ')
@@ -26,8 +30,8 @@ function plugin () {
      */
     ms = new ModularScale(msOptions)
     css.replaceValues(
-      /-?\d+msu\b/g,
-      { fast: 'msu' },
+      patterns[1],
+      { fast: name },
       str => ms(parseInt(str, 10))
     )
   }

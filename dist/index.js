@@ -17,7 +17,13 @@ var _modularScale2 = _interopRequireDefault(_modularScale);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function plugin() {
+  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+  var _ref$name = _ref.name;
+  var name = _ref$name === undefined ? 'msu' : _ref$name;
+
   return function (css) {
+    var patterns = [new RegExp('^--' + name + '-(\\w+)'), new RegExp('-?\\d+' + name + '\\b', 'g')];
     var msOptions = {};
     var ms;
 
@@ -29,11 +35,11 @@ function plugin() {
     css.walkDecls(function (decl) {
       var parentSelector = decl.parent.selector;
 
-      var _ref = decl.prop.match(/^--msu-(\w+)/) || [];
+      var _ref2 = decl.prop.match(patterns[0]) || [];
 
-      var _ref2 = _slicedToArray(_ref, 2);
+      var _ref3 = _slicedToArray(_ref2, 2);
 
-      var propKey = _ref2[1];
+      var propKey = _ref3[1];
 
       if (parentSelector === ':root' && propKey) {
         msOptions[propKey] = decl.value.split(' ');
@@ -45,7 +51,7 @@ function plugin() {
      * with numbers resulting from it.
      */
     ms = new _modularScale2.default(msOptions);
-    css.replaceValues(/-?\d+msu\b/g, { fast: 'msu' }, function (str) {
+    css.replaceValues(patterns[1], { fast: name }, function (str) {
       return ms(parseInt(str, 10));
     });
   };

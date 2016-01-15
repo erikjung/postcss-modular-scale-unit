@@ -1,0 +1,7 @@
+:root {
+  --mods-ratios: 1.5;
+}
+
+example {
+  value: -1mods 0mods 1mods calc(1mods * 1em);
+}
