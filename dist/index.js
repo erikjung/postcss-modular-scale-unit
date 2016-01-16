@@ -32,6 +32,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/;
 var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
+var splitOnSpace = (0, _ramda.split)(' ');
+var splitOnSlash = (0, _ramda.split)('/');
+var ratioToDecimal = (0, _ramda.pipe)(splitOnSlash, (0, _ramda.map)(function (n) {
+  return parseInt(n, 10);
+}), (0, _ramda.apply)(_ramda.divide), (0, _ramda.curry)(function (n) {
+  return n.toPrecision(4);
+}), (0, _ramda.curry)(function (n) {
+  return parseFloat(n);
+}));
+
 function plugin() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -55,7 +65,9 @@ function plugin() {
 
     var propKey = _match2[1];
 
-    if (propKey) msOptions[propKey] = decl.value.split(' ');
+    if (propKey) {
+      msOptions[propKey] = splitOnSpace(decl.value);
+    }
   }
 
   /**
@@ -68,11 +80,15 @@ function plugin() {
     var _match4 = _slicedToArray(_match3, 3);
 
     var ratios = _match4[1];
-    var bases = _match4[2];
-    // TODO: need to support <ratio> type (e.g. 4/3)
+    var _match4$ = _match4[2];
+    var bases = _match4$ === undefined ? '1' : _match4$;
 
-    msOptions.ratios = ratios.split(' ');
-    if (bases) msOptions.bases = bases.split(' ');
+    if ((0, _ramda.contains)('/', ratios)) {
+      ratios = (0, _ramda.toString)(ratioToDecimal(ratios));
+    }
+    bases = splitOnSpace(bases);
+    ratios = splitOnSpace(ratios);
+    msOptions = { bases: bases, ratios: ratios };
   }
 
   return function (css, result) {

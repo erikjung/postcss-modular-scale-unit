@@ -1,7 +1,8 @@
 :root {
   --modular-scale: 1.22 1;
+  --modular-scale: 4/3 1;
 }
 
 example {
-  value: 1.22;
+  value: 1.333;
 }

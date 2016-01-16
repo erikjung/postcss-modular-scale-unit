@@ -1,6 +1,16 @@
 import postcss from 'postcss'
 import ModularScale from 'modular-scale'
-import R, { match } from 'ramda'
+import R, {
+  apply,
+  contains,
+  curry,
+  divide,
+  map,
+  match,
+  pipe,
+  split,
+  toString
+} from 'ramda'
 
 /**
  * Pattern to match values for the `--modular-scale` property
@@ -14,6 +24,16 @@ import R, { match } from 'ramda'
 const CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
+const splitOnSpace = split(' ')
+const splitOnSlash = split('/')
+const ratioToDecimal = pipe(
+  splitOnSlash,
+  map(n => parseInt(n, 10)),
+  apply(divide),
+  curry(n => n.toPrecision(4)),
+  curry(n => parseFloat(n))
+)
+
 function plugin ({ name = 'msu' } = {}) {
   var isRootSelector = R.propEq('selector', ':root')
   var msOptions = {}
@@ -26,7 +46,10 @@ function plugin ({ name = 'msu' } = {}) {
   function setScaleOptionLegacy (decl) {
     var propPattern = new RegExp(`^--${name}-(\\w+)`)
     var [, propKey] = match(propPattern, decl.prop)
-    if (propKey) msOptions[propKey] = decl.value.split(' ')
+
+    if (propKey) {
+      msOptions[propKey] = splitOnSpace(decl.value)
+    }
   }
 
   /**
@@ -34,10 +57,14 @@ function plugin ({ name = 'msu' } = {}) {
    */
 
   function setScaleOption (decl) {
-    let [, ratios, bases] = match(CONFIG_VALUE_PATTERN, decl.value)
-    // TODO: need to support <ratio> type (e.g. 4/3)
-    msOptions.ratios = ratios.split(' ')
-    if (bases) msOptions.bases = bases.split(' ')
+    var [, ratios, bases = '1'] = match(CONFIG_VALUE_PATTERN, decl.value)
+
+    if (contains('/', ratios)) {
+      ratios = toString(ratioToDecimal(ratios))
+    }
+    bases = splitOnSpace(bases)
+    ratios = splitOnSpace(ratios)
+    msOptions = { bases, ratios }
   }
 
   return (css, result) => {
