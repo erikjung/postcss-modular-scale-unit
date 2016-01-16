@@ -14,7 +14,23 @@ var _modularScale = require('modular-scale');
 
 var _modularScale2 = _interopRequireDefault(_modularScale);
 
+var _ramda = require('ramda');
+
+var _ramda2 = _interopRequireDefault(_ramda);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Pattern to match values for the `--modular-scale` property
+ *
+ * - Matches <number> ratios: 1.618
+ * - Matches <ratio> ratios: 4/3
+ * - Matches ratios followed by one <integer> base: 1.618 1
+ * - Matches ratios followed by many <integer> bases: 1.618 1 2
+ */
+
+var CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/;
+var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
 function plugin() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -22,50 +38,79 @@ function plugin() {
   var _ref$name = _ref.name;
   var name = _ref$name === undefined ? 'msu' : _ref$name;
 
-  return function (css) {
-    var patterns = [new RegExp('^--' + name + '-(\\w+)'), new RegExp('-?\\d+' + name + '\\b', 'g')];
-    var msOptions = {};
-    var ms;
+  var isRootSelector = _ramda2.default.propEq('selector', ':root');
+  var msOptions = {};
+  var ms;
 
+  /**
+   * --msu-bases, --msu-ratios
+   */
+
+  function setScaleOptionLegacy(decl) {
+    var propPattern = new RegExp('^--' + name + '-(\\w+)');
+
+    var _match = (0, _ramda.match)(propPattern, decl.prop);
+
+    var _match2 = _slicedToArray(_match, 2);
+
+    var propKey = _match2[1];
+
+    if (propKey) msOptions[propKey] = decl.value.split(' ');
+  }
+
+  /**
+   * --modular-scale
+   */
+
+  function setScaleOption(decl) {
+    var _match3 = (0, _ramda.match)(CONFIG_VALUE_PATTERN, decl.value);
+
+    var _match4 = _slicedToArray(_match3, 3);
+
+    var ratios = _match4[1];
+    var bases = _match4[2];
+    // TODO: need to support <ratio> type (e.g. 4/3)
+
+    msOptions.ratios = ratios.split(' ');
+    if (bases) msOptions.bases = bases.split(' ');
+  }
+
+  return function (css, result) {
     /**
      * Extract ratios and bases from custom properties defined on `:root`.
      * If `--msu-ratios` or `--msu-bases` properties are found, their values
      * will be used to overwrite the default options for the modular scale.
+     *
+     * TODO: Deprecate support of these properties.
      */
-    css.walkDecls(function (decl) {
-      var parentSelector = decl.parent.selector;
 
-      var _ref2 = decl.prop.match(patterns[0]) || [];
-
-      var _ref3 = _slicedToArray(_ref2, 2);
-
-      var propKey = _ref3[1];
-
-      if (parentSelector === ':root' && propKey) {
-        msOptions[propKey] = decl.value.split(' ');
-      }
-
-      if (parentSelector === ':root' && /^--modular-scale$/.test(decl.prop)) {
-        var _ref4 = decl.value.match(/^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/) || [];
-
-        var _ref5 = _slicedToArray(_ref4, 3);
-
-        var ratios = _ref5[1];
-        var bases = _ref5[2];
-        // TODO: need to support <ratio> type (e.g. 4/3)
-
-        ratios = ratios.split(' ');
-        bases = bases.split(' ');
-        msOptions = { ratios: ratios, bases: bases };
+    css.walkDecls(new RegExp('^--' + name + '-(\\w+)'), function (decl) {
+      decl.warn(result, 'Setting options via ' + decl.prop + ' will be deprecated soon. Use the --modular-scale property instead.');
+      if (isRootSelector(decl.parent)) {
+        setScaleOptionLegacy(decl);
       }
     });
 
     /**
-     * Initialize the modular scale and replace any values using the `msu` unit
-     * with numbers resulting from it.
+     * Extract ratios and bases from a custom property defined on `:root`.
+     * If `--modular-scale` is found, its value will be used to overwrite
+     * the default options for the modular scale.
      */
+
+    css.walkDecls(CONFIG_PROPERTY_PATTERN, function (decl) {
+      if (isRootSelector(decl.parent)) {
+        setScaleOption(decl);
+      }
+    });
+
+    /**
+     * Initialize the modular scale; replace any CSS values using the supplied
+     * unit with calculated numbers resulting from the scale.
+     */
+
     ms = new _modularScale2.default(msOptions);
-    css.replaceValues(patterns[1], { fast: name }, function (str) {
+
+    css.replaceValues(new RegExp('-?\\d+' + name + '\\b', 'g'), { fast: name }, function (str) {
       return ms(parseInt(str, 10));
     });
   };

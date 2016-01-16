@@ -19,7 +19,8 @@
   "main": "dist/index.js",
   "dependencies": {
     "modular-scale": "^4.4.1",
-    "postcss": "^5.0.13"
+    "postcss": "^5.0.13",
+    "ramda": "^0.19.1"
   },
   "devDependencies": {
     "ava": "^0.9.1",
