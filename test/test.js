@@ -52,6 +52,12 @@ test('Works with a custom unit name', t => {
   return run(t, input, expected, { name: 'mods' })
 })
 
+test('Does what the docs show for example', t => {
+  var input = readFile('./docsExample-in.css')
+  var expected = readFile('./docsExample-out.css')
+  return run(t, input, expected)
+})
+
 test('Supports legacy config properties', t => {
   var input = readFile('./legacy-in.css')
   var expected = readFile('./legacy-out.css')
