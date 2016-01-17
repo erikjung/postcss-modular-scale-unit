@@ -1,7 +1,10 @@
+[ci]: https://travis-ci.org/erikjung/postcss-modular-scale-unit
+[ci-img]: https://travis-ci.org/erikjung/postcss-modular-scale-unit.svg
+
 [PostCSS]: https://github.com/postcss/postcss
 [PostCSS usage docs]: https://github.com/postcss/postcss#usage
-[ci-img]: https://travis-ci.org/erikjung/postcss-modular-scale-unit.svg
-[ci]: https://travis-ci.org/erikjung/postcss-modular-scale-unit
+
+[modular-scale]: https://github.com/kristoferjoseph/modular-scale
 [postcss-modular-scale]: https://github.com/kristoferjoseph/postcss-modular-scale
 [postcss-vertical-rhythm]: https://github.com/markgoodyear/postcss-vertical-rhythm
 [postcss-cssnext]: https://github.com/MoOx/postcss-cssnext
@@ -9,41 +12,66 @@
 
 # PostCSS Modular Scale Unit [![Build Status][ci-img]][ci]
 
-> A [PostCSS] plugin to create a modular scale unit.
+This plugin transforms CSS declaration values using a custom `msu` unit. Instances of this unit are replaced with numbers from a [modular scale](http://modularscale.com).
 
-## Install
+## Installation
 
 ```sh
-npm install postcss-modular-scale-unit --save-dev
+npm install postcss-modular-scale-unit
 ```
 
 ## Examples
 
-**Input:**
+### Setup
+
+The **ratio** and **base** parameters of your modular scale can be supplied with the `--modular-scale` custom property. This property acts as a shorthand, accepting values in this order:
+
+
+0. **ratio:** either a decimal or fraction
+0. **base:** (optional) one or more integers, defaulting to `1` if omitted
 
 ```css
-/* Options passed to modular-scale */
 :root {
-  --msu-bases: 1;
-  --msu-ratios: 1.5;
+  /* Just a ratio of 1.5 */
+  --modular-scale: 1.5;
+
+  /* Same as above, but as a fraction */
+  --modular-scale: 3/2;
+
+  /* Ratio of 1.5 with bases of 1 and 1.25 */
+  --modular-scale: 1.5 1 1.25;
+}
+```
+
+### Input
+
+```css
+.Example {
+  line-height: 1msu;
+}
+
+.Example {
+  width: calc(-2msu * 100%);
 }
 
 .Example {
   font-size: calc(2msu * 1em);
-  line-height: 1msu;
 }
 ```
 
-**Output:**
+### Output
 
 ```css
-:root {
-  /* ... */
+.Example {
+  line-height: 1.5;
+}
+
+.Example {
+  width: calc(0.444 * 100%);
 }
 
 .Example {
   font-size: calc(2.25 * 1em);
-  line-height: 1.5;
 }
 ```
 
@@ -67,7 +95,3 @@ See the [PostCSS usage docs] docs for more examples.
 ## Inspiration
 
 This plugin is inspired by [postcss-modular-scale] and [postcss-vertical-rhythm]. The goal is to provide a way to use modular scale values as if they were native CSS units.
-
-## Todo
-
-- Allow customization of the `msu` unit name.
