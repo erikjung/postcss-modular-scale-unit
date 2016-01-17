@@ -1,6 +1,7 @@
 [ci]: https://travis-ci.org/erikjung/postcss-modular-scale-unit
 [ci-img]: https://travis-ci.org/erikjung/postcss-modular-scale-unit.svg
-
+[ver-img]: https://img.shields.io/npm/v/postcss-modular-scale-unit.svg
+[npm]: https://www.npmjs.com/package/postcss-modular-scale-unit
 [PostCSS]: https://github.com/postcss/postcss
 [PostCSS usage docs]: https://github.com/postcss/postcss#usage
 
@@ -10,7 +11,10 @@
 [postcss-cssnext]: https://github.com/MoOx/postcss-cssnext
 [postcss-calc]: https://github.com/postcss/postcss-calc
 
-# PostCSS Modular Scale Unit [![Build Status][ci-img]][ci]
+# PostCSS Modular Scale Unit
+
+[![Build Status][ci-img]][ci]
+[![npm][ver-img]][npm]
 
 This plugin transforms CSS declaration values using a custom `msu` unit. Instances of this unit are replaced with numbers from a [modular scale](http://modularscale.com).
 
