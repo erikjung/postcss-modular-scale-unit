@@ -1,6 +1,6 @@
 {
   "name": "postcss-modular-scale-unit",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "PostCSS plugin to create a modular scale unit",
   "keywords": [
     "postcss",
