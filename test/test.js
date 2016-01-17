@@ -3,16 +3,16 @@ import plugin from '../'
 import postcss from 'postcss'
 import test from 'ava'
 
-function run(t, input, output, opts = {}) {
+function run (t, input, output, opts = {}, strict = true) {
   return postcss([plugin(opts)])
     .process(input)
     .then(result => {
       t.same(result.css, output)
-      t.same(result.warnings().length, 0)
+      if (strict) t.same(result.warnings().length, 0)
     })
 }
 
-function readFile(path) {
+function readFile (path) {
   return fs.readFileSync(path, 'utf8')
 }
 
@@ -44,4 +44,22 @@ test('Ignores invalid unit name', t => {
   var input = readFile('./invalid-in.css')
   var expected = readFile('./invalid-out.css')
   return run(t, input, expected)
+})
+
+test('Works with a custom unit name', t => {
+  var input = readFile('./customName-in.css')
+  var expected = readFile('./customName-out.css')
+  return run(t, input, expected, { name: 'mods' })
+})
+
+test('Does what the docs show for example', t => {
+  var input = readFile('./docsExample-in.css')
+  var expected = readFile('./docsExample-out.css')
+  return run(t, input, expected)
+})
+
+test('Supports legacy config properties', t => {
+  var input = readFile('./legacy-in.css')
+  var expected = readFile('./legacy-out.css')
+  return run(t, input, expected, {}, false)
 })

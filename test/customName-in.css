@@ -3,5 +3,5 @@
 }
 
 example {
-  value: calc(1msu * 1rem);
+  value: -1mods 0mods 1mods calc(1mods * 1em);
 }

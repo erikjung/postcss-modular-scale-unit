@@ -1,6 +1,5 @@
 :root {
-  --msu-bases: 1 1.5;
-  --msu-ratios: 2;
+  --modular-scale: 2 1 1.5;
 }
 
 example {
