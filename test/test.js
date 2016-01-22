@@ -2,6 +2,8 @@ import fs from 'fs'
 import plugin from '../'
 import postcss from 'postcss'
 import test from 'ava'
+import 'babel-core/register'
+import ModularScale from '../src/ModularScale'
 
 function run (t, input, output, opts = {}, strict = true) {
   return postcss([plugin(opts)])
@@ -15,6 +17,70 @@ function run (t, input, output, opts = {}, strict = true) {
 function readFile (path) {
   return fs.readFileSync(path, 'utf8')
 }
+
+test('Modular scale general behavior', t => {
+  var ratios = [
+    1.067,
+    1.125,
+    1.2,
+    1.25,
+    1.333,
+    1.414,
+    1.5,
+    1.6,
+    1.618,
+    1.667,
+    1.778,
+    1.875,
+    2,
+    2.5,
+    2.667,
+    3,
+    4
+  ]
+  var ms = new ModularScale()
+
+  t.plan(2 + ratios.length)
+
+  t.same(ms(0), 1, 'Default base and ratio; interval 0')
+  t.same(ms(1), 1.5, 'Default base and ratio; interval 1')
+
+  ratios.forEach(ratio => {
+    var ms = new ModularScale({ ratio })
+    t.same(ms(1), ratio, `Default base and ratio ${ratio}; interval 1`)
+  })
+})
+
+test('Modular scale specific behavior', t => {
+  // http://www.modularscale.com/?1,1.5,1.25,1.125&em&2&web&table
+  var ms = new ModularScale({ ratio: 2, bases: [1, 1.5, 1.25, 1.125] })
+  var expectedValues = {
+    [6]: 2.5,
+    [5]: 2.25,
+    [4]: 2,
+    [3]: 1.5,
+    [2]: 1.25,
+    [1]: 1.125,
+    [0]: 1,
+    [-1]: 0.75,
+    [-2]: 0.625,
+    [-3]: 0.563,
+    [-4]: 0.5,
+    [-5]: 0.375,
+    [-6]: 0.313
+  }
+  var intervals = Object.keys(expectedValues)
+
+  t.plan(intervals.length)
+
+  intervals.forEach(interval => {
+    t.same(
+      ms(interval),
+      expectedValues[interval],
+      'Multiple bases and a common ratio of 2'
+    )
+  })
+})
 
 test('Works with a default ratio', t => {
   var input = readFile('./default-in.css')
