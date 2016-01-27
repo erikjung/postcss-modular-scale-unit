@@ -49,6 +49,7 @@ const sortUp = sort((a, b) => a - b)
 const splitOnSpace = split(' ')
 const splitOnSlash = split('/')
 const isRootSelector = propEq('selector', ':root')
+const prepStrands = pipe(flatten, sortUp)
 const prepBases = pipe(
   splitOnSpace,
   rejectEmpty,
@@ -64,23 +65,19 @@ const ratioToDecimal = pipe(
 class ModularScale {
   constructor ({ ratio = 1.618, bases = [1] } = {}) {
     const calc = pow(ratio)
-
     return interval => {
+      const result = pipe(nth(interval), toRatio)
+      const rangePair = sortUp([
+        interval ? interval + Math.sign(interval) : 0,
+        interval ? interval % 1 : 1
+      ])
       const strands = map(base => {
         const x = pipe(calc, multiply(base))
-        const startCount = interval ? interval + Math.sign(interval) : 0
-        const endCount = interval ? interval % 1 : 1
-        const countTuple = sortUp([startCount, endCount])
-
         return map(
           count => x(count),
-          range(...countTuple)
+          range(...rangePair)
         )
       }, bases)
-
-      const prepStrands = pipe(flatten, sortUp)
-      const result = pipe(nth(interval), toRatio)
-
       return result(prepStrands(strands))
     }
   }

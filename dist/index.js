@@ -48,6 +48,7 @@ var sortUp = (0, _ramda.sort)(function (a, b) {
 var splitOnSpace = (0, _ramda.split)(' ');
 var splitOnSlash = (0, _ramda.split)('/');
 var isRootSelector = (0, _ramda.propEq)('selector', ':root');
+var prepStrands = (0, _ramda.pipe)(_ramda.flatten, sortUp);
 var prepBases = (0, _ramda.pipe)(splitOnSpace, rejectEmpty, (0, _ramda.map)(toFloat));
 var ratioToDecimal = (0, _ramda.pipe)(splitOnSlash, (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toRatio);
 
@@ -62,22 +63,15 @@ var ModularScale = function ModularScale() {
   _classCallCheck(this, ModularScale);
 
   var calc = pow(ratio);
-
   return function (interval) {
+    var result = (0, _ramda.pipe)((0, _ramda.nth)(interval), toRatio);
+    var rangePair = sortUp([interval ? interval + Math.sign(interval) : 0, interval ? interval % 1 : 1]);
     var strands = (0, _ramda.map)(function (base) {
       var x = (0, _ramda.pipe)(calc, (0, _ramda.multiply)(base));
-      var startCount = interval ? interval + Math.sign(interval) : 0;
-      var endCount = interval ? interval % 1 : 1;
-      var countTuple = sortUp([startCount, endCount]);
-
       return (0, _ramda.map)(function (count) {
         return x(count);
-      }, _ramda.range.apply(undefined, _toConsumableArray(countTuple)));
+      }, _ramda.range.apply(undefined, _toConsumableArray(rangePair)));
     }, bases);
-
-    var prepStrands = (0, _ramda.pipe)(_ramda.flatten, sortUp);
-    var result = (0, _ramda.pipe)((0, _ramda.nth)(interval), toRatio);
-
     return result(prepStrands(strands));
   };
 };
