@@ -31,8 +31,8 @@ npm install postcss-modular-scale-unit
 The **ratio** and **base** parameters of your modular scale can be supplied with the `--modular-scale` custom property. This property acts as a shorthand, accepting values in this order:
 
 
-0. **ratio:** either a decimal or fraction
-0. **base:** (optional) one or more numbers, defaulting to `1` if omitted
+0. **ratio:** a decimal or fraction greater than 1
+0. **base:** (optional) one or more positive numbers, defaulting to `1` if omitted
 
 ```css
 :root {
