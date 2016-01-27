@@ -1,16 +1,30 @@
 import postcss from 'postcss'
-import ModularScale from 'modular-scale'
-import R, {
+import {
+  __,
   apply,
   contains,
   curry,
   divide,
+  flatten,
+  invoker,
+  isEmpty,
   map,
   match,
+  multiply,
+  nth,
   pipe,
+  propEq,
+  range,
+  reject,
+  sort,
   split,
   toString
 } from 'ramda'
+
+/**
+ * Pattern to match the `--modular-scale` property
+ */
+const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
 /**
  * Pattern to match values for the `--modular-scale` property
@@ -20,23 +34,61 @@ import R, {
  * - Matches ratios followed by one <integer> base: 1.618 1
  * - Matches ratios followed by many <integer> bases: 1.618 1 2
  */
-
 const CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/
-const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
+/**
+ * Curried Utility Functions
+ */
+const pow = curry(Math.pow)
+const toInt = curry(parseInt, __)(10)
+const toFloat = curry(parseFloat)
+const toFixed = invoker(1, 'toFixed')(3)
+const toRatio = pipe(toFixed, toFloat)
+const rejectEmpty = reject(isEmpty)
+const sortUp = sort((a, b) => a - b)
 const splitOnSpace = split(' ')
 const splitOnSlash = split('/')
+const isRootSelector = propEq('selector', ':root')
+const prepBases = pipe(
+  splitOnSpace,
+  rejectEmpty,
+  map(toFloat)
+)
 const ratioToDecimal = pipe(
   splitOnSlash,
-  map(n => parseInt(n, 10)),
+  map(toInt),
   apply(divide),
-  curry(n => n.toPrecision(4)),
-  curry(n => parseFloat(n))
+  toRatio
 )
 
+class ModularScale {
+  constructor ({ ratio = 1.618, bases = [1] } = {}) {
+    const calc = pow(ratio)
+
+    return interval => {
+      const strands = map(base => {
+        const x = pipe(calc, multiply(base))
+        const startCount = interval ? interval + Math.sign(interval) : 0
+        const endCount = interval ? interval % 1 : 1
+        const countTuple = sortUp([startCount, endCount])
+
+        return map(
+          count => x(count),
+          range(...countTuple)
+        )
+      }, bases)
+
+      const prepStrands = pipe(flatten, sortUp)
+      const result = pipe(nth(interval), toRatio)
+
+      return result(prepStrands(strands))
+    }
+  }
+}
+
 function plugin ({ name = 'msu' } = {}) {
-  var isRootSelector = R.propEq('selector', ':root')
-  var msOptions = {}
+  const propPattern = new RegExp(`^--${name}-(\\w+)`)
+  var msOptions
   var ms
 
   /**
@@ -44,12 +96,21 @@ function plugin ({ name = 'msu' } = {}) {
    */
 
   function setScaleOptionLegacy (decl) {
-    var propPattern = new RegExp(`^--${name}-(\\w+)`)
-    var [, propKey] = match(propPattern, decl.prop)
+    const [, propKey] = match(propPattern, decl.prop)
+    var ratio
+    var bases
 
-    if (propKey) {
-      msOptions[propKey] = splitOnSpace(decl.value)
+    switch (propKey) {
+      case 'ratios':
+        ratio = decl.value
+        break
+      case 'bases':
+        bases = prepBases(decl.value)
+        break
+      default:
+        break
     }
+    msOptions = { bases, ratio }
   }
 
   /**
@@ -57,14 +118,13 @@ function plugin ({ name = 'msu' } = {}) {
    */
 
   function setScaleOption (decl) {
-    var [, ratios, bases = '1'] = match(CONFIG_VALUE_PATTERN, decl.value)
+    var [, ratio, bases = '1'] = match(CONFIG_VALUE_PATTERN, decl.value)
 
-    if (contains('/', ratios)) {
-      ratios = toString(ratioToDecimal(ratios))
+    if (contains('/', ratio)) {
+      ratio = toString(ratioToDecimal(ratio))
     }
-    bases = splitOnSpace(bases)
-    ratios = splitOnSpace(ratios)
-    msOptions = { bases, ratios }
+    bases = prepBases(bases)
+    msOptions = { bases, ratio }
   }
 
   return (css, result) => {
@@ -76,7 +136,7 @@ function plugin ({ name = 'msu' } = {}) {
      * TODO: Deprecate support of these properties.
      */
 
-    css.walkDecls(new RegExp(`^--${name}-(\\w+)`), decl => {
+    css.walkDecls(propPattern, decl => {
       decl.warn(result,
         `Setting options via ${decl.prop} will be deprecated soon. Use the --modular-scale property instead.`
       )

@@ -10,15 +10,18 @@ var _postcss = require('postcss');
 
 var _postcss2 = _interopRequireDefault(_postcss);
 
-var _modularScale = require('modular-scale');
-
-var _modularScale2 = _interopRequireDefault(_modularScale);
-
 var _ramda = require('ramda');
 
-var _ramda2 = _interopRequireDefault(_ramda);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * Pattern to match the `--modular-scale` property
+ */
+var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
 /**
  * Pattern to match values for the `--modular-scale` property
@@ -28,28 +31,65 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * - Matches ratios followed by one <integer> base: 1.618 1
  * - Matches ratios followed by many <integer> bases: 1.618 1 2
  */
-
 var CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/;
-var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
+/**
+ * Curried Utility Functions
+ */
+var pow = (0, _ramda.curry)(Math.pow);
+var toInt = (0, _ramda.curry)(parseInt, _ramda.__)(10);
+var toFloat = (0, _ramda.curry)(parseFloat);
+var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
+var toRatio = (0, _ramda.pipe)(toFixed, toFloat);
+var rejectEmpty = (0, _ramda.reject)(_ramda.isEmpty);
+var sortUp = (0, _ramda.sort)(function (a, b) {
+  return a - b;
+});
 var splitOnSpace = (0, _ramda.split)(' ');
 var splitOnSlash = (0, _ramda.split)('/');
-var ratioToDecimal = (0, _ramda.pipe)(splitOnSlash, (0, _ramda.map)(function (n) {
-  return parseInt(n, 10);
-}), (0, _ramda.apply)(_ramda.divide), (0, _ramda.curry)(function (n) {
-  return n.toPrecision(4);
-}), (0, _ramda.curry)(function (n) {
-  return parseFloat(n);
-}));
+var isRootSelector = (0, _ramda.propEq)('selector', ':root');
+var prepBases = (0, _ramda.pipe)(splitOnSpace, rejectEmpty, (0, _ramda.map)(toFloat));
+var ratioToDecimal = (0, _ramda.pipe)(splitOnSlash, (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toRatio);
 
-function plugin() {
+var ModularScale = function ModularScale() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  var _ref$name = _ref.name;
-  var name = _ref$name === undefined ? 'msu' : _ref$name;
+  var _ref$ratio = _ref.ratio;
+  var ratio = _ref$ratio === undefined ? 1.618 : _ref$ratio;
+  var _ref$bases = _ref.bases;
+  var bases = _ref$bases === undefined ? [1] : _ref$bases;
 
-  var isRootSelector = _ramda2.default.propEq('selector', ':root');
-  var msOptions = {};
+  _classCallCheck(this, ModularScale);
+
+  var calc = pow(ratio);
+
+  return function (interval) {
+    var strands = (0, _ramda.map)(function (base) {
+      var x = (0, _ramda.pipe)(calc, (0, _ramda.multiply)(base));
+      var startCount = interval ? interval + Math.sign(interval) : 0;
+      var endCount = interval ? interval % 1 : 1;
+      var countTuple = sortUp([startCount, endCount]);
+
+      return (0, _ramda.map)(function (count) {
+        return x(count);
+      }, _ramda.range.apply(undefined, _toConsumableArray(countTuple)));
+    }, bases);
+
+    var prepStrands = (0, _ramda.pipe)(_ramda.flatten, sortUp);
+    var result = (0, _ramda.pipe)((0, _ramda.nth)(interval), toRatio);
+
+    return result(prepStrands(strands));
+  };
+};
+
+function plugin() {
+  var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+  var _ref2$name = _ref2.name;
+  var name = _ref2$name === undefined ? 'msu' : _ref2$name;
+
+  var propPattern = new RegExp('^--' + name + '-(\\w+)');
+  var msOptions;
   var ms;
 
   /**
@@ -57,17 +97,26 @@ function plugin() {
    */
 
   function setScaleOptionLegacy(decl) {
-    var propPattern = new RegExp('^--' + name + '-(\\w+)');
-
     var _match = (0, _ramda.match)(propPattern, decl.prop);
 
     var _match2 = _slicedToArray(_match, 2);
 
     var propKey = _match2[1];
 
-    if (propKey) {
-      msOptions[propKey] = splitOnSpace(decl.value);
+    var ratio;
+    var bases;
+
+    switch (propKey) {
+      case 'ratios':
+        ratio = decl.value;
+        break;
+      case 'bases':
+        bases = prepBases(decl.value);
+        break;
+      default:
+        break;
     }
+    msOptions = { bases: bases, ratio: ratio };
   }
 
   /**
@@ -79,16 +128,15 @@ function plugin() {
 
     var _match4 = _slicedToArray(_match3, 3);
 
-    var ratios = _match4[1];
+    var ratio = _match4[1];
     var _match4$ = _match4[2];
     var bases = _match4$ === undefined ? '1' : _match4$;
 
-    if ((0, _ramda.contains)('/', ratios)) {
-      ratios = (0, _ramda.toString)(ratioToDecimal(ratios));
+    if ((0, _ramda.contains)('/', ratio)) {
+      ratio = (0, _ramda.toString)(ratioToDecimal(ratio));
     }
-    bases = splitOnSpace(bases);
-    ratios = splitOnSpace(ratios);
-    msOptions = { bases: bases, ratios: ratios };
+    bases = prepBases(bases);
+    msOptions = { bases: bases, ratio: ratio };
   }
 
   return function (css, result) {
@@ -100,7 +148,7 @@ function plugin() {
      * TODO: Deprecate support of these properties.
      */
 
-    css.walkDecls(new RegExp('^--' + name + '-(\\w+)'), function (decl) {
+    css.walkDecls(propPattern, function (decl) {
       decl.warn(result, 'Setting options via ' + decl.prop + ' will be deprecated soon. Use the --modular-scale property instead.');
       if (isRootSelector(decl.parent)) {
         setScaleOptionLegacy(decl);
@@ -124,7 +172,7 @@ function plugin() {
      * unit with calculated numbers resulting from the scale.
      */
 
-    ms = new _modularScale2.default(msOptions);
+    ms = new ModularScale(msOptions);
 
     css.replaceValues(new RegExp('-?\\d+' + name + '\\b', 'g'), { fast: name }, function (str) {
       return ms(parseInt(str, 10));
