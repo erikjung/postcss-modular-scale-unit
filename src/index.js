@@ -1,12 +1,16 @@
 import postcss from 'postcss'
 import {
   __,
+  all,
   apply,
+  both,
   contains,
   curry,
   divide,
   flatten,
+  gt,
   invoker,
+  is,
   isEmpty,
   map,
   match,
@@ -44,6 +48,9 @@ const toFloat = curry(parseFloat)
 const toFixed = invoker(1, 'toFixed')(3)
 const toFixedFloat = pipe(toFixed, toFloat)
 const sortUp = sort((a, b) => a - b)
+const isNumber = is(Number)
+const isAboveZero = both(isNumber, gt(__, 0))
+const isAboveOne = both(isNumber, gt(__, 1))
 const isRootSelector = propEq('selector', ':root')
 const unnestSort = pipe(flatten, sortUp)
 const parseFloats = pipe(
@@ -55,26 +62,36 @@ const fractionToFloat = pipe(
   split('/'),
   map(toInt),
   apply(divide),
-  toFixedFloat
+  toFloat
 )
 
 class ModularScale {
   constructor ({ ratio = 1.618, bases = [1] } = {}) {
     const calc = pow(ratio)
+
+    if (!isAboveOne(ratio)) {
+      throw new TypeError('"ratio" must be a number greater than 1.')
+    }
+
+    if (!all(isAboveZero, bases)) {
+      throw new TypeError('"bases" must be a list of numbers greater than 0.')
+    }
+
     return interval => {
-      const result = pipe(nth(interval), toFixedFloat)
-      const rangePair = sortUp([
+      const intervalRange = sortUp([
         interval ? interval + Math.sign(interval) : 0,
         interval ? interval % 1 : 1
       ])
-      const strands = map(base => {
-        const x = pipe(calc, multiply(base))
-        return map(
-          count => x(count),
-          range(...rangePair)
-        )
+      const baseStrands = map(base => {
+        const step = pipe(calc, multiply(base))
+        return map(i => step(i), range(...intervalRange))
       }, bases)
-      return result(unnestSort(strands))
+
+      return pipe(
+        unnestSort,
+        nth(interval),
+        toFixedFloat
+      )(baseStrands)
     }
   }
 }
@@ -95,7 +112,7 @@ function plugin ({ name = 'msu' } = {}) {
 
     switch (propKey) {
       case 'ratios':
-        ratio = decl.value
+        ratio = toFloat(decl.value)
         break
       case 'bases':
         bases = parseFloats(decl.value)
@@ -115,6 +132,8 @@ function plugin ({ name = 'msu' } = {}) {
 
     if (contains('/', ratio)) {
       ratio = fractionToFloat(ratio)
+    } else {
+      ratio = toFloat(ratio)
     }
     bases = parseFloats(bases)
     msOptions = { bases, ratio }
