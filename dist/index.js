@@ -40,17 +40,14 @@ var pow = (0, _ramda.curry)(Math.pow);
 var toInt = (0, _ramda.curry)(parseInt, _ramda.__)(10);
 var toFloat = (0, _ramda.curry)(parseFloat);
 var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
-var toRatio = (0, _ramda.pipe)(toFixed, toFloat);
-var rejectEmpty = (0, _ramda.reject)(_ramda.isEmpty);
+var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
 var sortUp = (0, _ramda.sort)(function (a, b) {
   return a - b;
 });
-var splitOnSpace = (0, _ramda.split)(' ');
-var splitOnSlash = (0, _ramda.split)('/');
 var isRootSelector = (0, _ramda.propEq)('selector', ':root');
-var prepStrands = (0, _ramda.pipe)(_ramda.flatten, sortUp);
-var prepBases = (0, _ramda.pipe)(splitOnSpace, rejectEmpty, (0, _ramda.map)(toFloat));
-var ratioToDecimal = (0, _ramda.pipe)(splitOnSlash, (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toRatio);
+var unnestSort = (0, _ramda.pipe)(_ramda.flatten, sortUp);
+var parseFloats = (0, _ramda.pipe)((0, _ramda.split)(' '), (0, _ramda.reject)(_ramda.isEmpty), (0, _ramda.map)(toFloat));
+var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toFixedFloat);
 
 var ModularScale = function ModularScale() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -64,7 +61,7 @@ var ModularScale = function ModularScale() {
 
   var calc = pow(ratio);
   return function (interval) {
-    var result = (0, _ramda.pipe)((0, _ramda.nth)(interval), toRatio);
+    var result = (0, _ramda.pipe)((0, _ramda.nth)(interval), toFixedFloat);
     var rangePair = sortUp([interval ? interval + Math.sign(interval) : 0, interval ? interval % 1 : 1]);
     var strands = (0, _ramda.map)(function (base) {
       var x = (0, _ramda.pipe)(calc, (0, _ramda.multiply)(base));
@@ -72,7 +69,7 @@ var ModularScale = function ModularScale() {
         return x(count);
       }, _ramda.range.apply(undefined, _toConsumableArray(rangePair)));
     }, bases);
-    return result(prepStrands(strands));
+    return result(unnestSort(strands));
   };
 };
 
@@ -105,7 +102,7 @@ function plugin() {
         ratio = decl.value;
         break;
       case 'bases':
-        bases = prepBases(decl.value);
+        bases = parseFloats(decl.value);
         break;
       default:
         break;
@@ -127,9 +124,9 @@ function plugin() {
     var bases = _match4$ === undefined ? '1' : _match4$;
 
     if ((0, _ramda.contains)('/', ratio)) {
-      ratio = (0, _ramda.toString)(ratioToDecimal(ratio));
+      ratio = fractionToFloat(ratio);
     }
-    bases = prepBases(bases);
+    bases = parseFloats(bases);
     msOptions = { bases: bases, ratio: ratio };
   }
 
