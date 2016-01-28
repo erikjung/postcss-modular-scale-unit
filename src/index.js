@@ -24,6 +24,8 @@ import {
   unnest
 } from 'ramda'
 
+const PLUGIN_NAME = 'postcss-modular-scale-unit'
+
 /**
  * Pattern to match the `--modular-scale` property
  */
@@ -184,4 +186,4 @@ function plugin ({ name = 'msu' } = {}) {
   }
 }
 
-export default postcss.plugin('postcss-modular-scale-unit', plugin)
+export default postcss.plugin(PLUGIN_NAME, plugin)
