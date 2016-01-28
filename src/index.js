@@ -7,7 +7,6 @@ import {
   contains,
   curry,
   divide,
-  flatten,
   gt,
   invoker,
   is,
@@ -21,7 +20,8 @@ import {
   range,
   reject,
   sort,
-  split
+  split,
+  unnest
 } from 'ramda'
 
 /**
@@ -52,7 +52,7 @@ const isNumber = is(Number)
 const isAboveZero = both(isNumber, gt(__, 0))
 const isAboveOne = both(isNumber, gt(__, 1))
 const isRootSelector = propEq('selector', ':root')
-const unnestSort = pipe(flatten, sortUp)
+const unnestSort = pipe(unnest, sortUp)
 const parseFloats = pipe(
   split(' '),
   reject(isEmpty),

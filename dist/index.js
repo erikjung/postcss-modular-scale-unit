@@ -48,7 +48,7 @@ var isNumber = (0, _ramda.is)(Number);
 var isAboveZero = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 0));
 var isAboveOne = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 1));
 var isRootSelector = (0, _ramda.propEq)('selector', ':root');
-var unnestSort = (0, _ramda.pipe)(_ramda.flatten, sortUp);
+var unnestSort = (0, _ramda.pipe)(_ramda.unnest, sortUp);
 var parseFloats = (0, _ramda.pipe)((0, _ramda.split)(' '), (0, _ramda.reject)(_ramda.isEmpty), (0, _ramda.map)(toFloat));
 var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toFloat);
 
