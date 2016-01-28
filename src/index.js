@@ -10,15 +10,12 @@ import {
   gt,
   invoker,
   is,
-  isEmpty,
   map,
-  match,
   multiply,
   nth,
   pipe,
   propEq,
   range,
-  reject,
   sort,
   split,
   unnest
@@ -41,11 +38,6 @@ const isAboveZero = both(isNumber, gt(__, 0))
 const isAboveOne = both(isNumber, gt(__, 1))
 const isRootSelector = propEq('selector', ':root')
 const unnestSort = pipe(unnest, sortUp)
-const parseFloats = pipe(
-  split(' '),
-  reject(isEmpty),
-  map(toFloat)
-)
 const fractionToFloat = pipe(
   split('/'),
   map(toInt),
@@ -85,37 +77,10 @@ class ModularScale {
 }
 
 function plugin ({ name = 'msu' } = {}) {
-  const propPattern = new RegExp(`^--${name}-(\\w+)`)
   var msOptions
   var ms
 
-  /**
-   * --msu-bases, --msu-ratios
-   */
-
-  function setScaleOptionLegacy (decl) {
-    const [, propKey] = match(propPattern, decl.prop)
-    var ratio
-    var bases
-
-    switch (propKey) {
-      case 'ratios':
-        ratio = toFloat(decl.value)
-        break
-      case 'bases':
-        bases = parseFloats(decl.value)
-        break
-      default:
-        break
-    }
-    msOptions = { bases, ratio }
-  }
-
-  /**
-   * --modular-scale
-   */
-
-  function setScaleOption (decl) {
+  function setOptions (decl) {
     var [ratio, ...bases] = postcss.list.space(decl.value)
 
     if (contains('/', ratio)) {
@@ -134,23 +99,6 @@ function plugin ({ name = 'msu' } = {}) {
 
   return (css, result) => {
     /**
-     * Extract ratios and bases from custom properties defined on `:root`.
-     * If `--msu-ratios` or `--msu-bases` properties are found, their values
-     * will be used to overwrite the default options for the modular scale.
-     *
-     * TODO: Deprecate support of these properties.
-     */
-
-    css.walkDecls(propPattern, decl => {
-      decl.warn(result,
-        `Setting options via ${decl.prop} will be deprecated soon. Use the --modular-scale property instead.`
-      )
-      if (isRootSelector(decl.parent)) {
-        setScaleOptionLegacy(decl)
-      }
-    })
-
-    /**
      * Extract ratios and bases from a custom property defined on `:root`.
      * If `--modular-scale` is found, its value will be used to overwrite
      * the default options for the modular scale.
@@ -158,7 +106,7 @@ function plugin ({ name = 'msu' } = {}) {
 
     css.walkDecls(CONFIG_PROPERTY_PATTERN, decl => {
       if (isRootSelector(decl.parent)) {
-        setScaleOption(decl)
+        setOptions(decl)
       }
     })
 
