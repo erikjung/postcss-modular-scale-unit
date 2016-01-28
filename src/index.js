@@ -28,7 +28,7 @@ const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
  * Curried Utility Functions
  */
 const pow = curry(Math.pow)
-const toInt = curry(parseInt, __)(10)
+const toInt = curry(parseInt)(__, 10)
 const toFloat = curry(parseFloat)
 const toFixed = invoker(1, 'toFixed')(3)
 const toFixedFloat = pipe(toFixed, toFloat)

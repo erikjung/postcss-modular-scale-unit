@@ -25,7 +25,7 @@ var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
  * Curried Utility Functions
  */
 var pow = (0, _ramda.curry)(Math.pow);
-var toInt = (0, _ramda.curry)(parseInt, _ramda.__)(10);
+var toInt = (0, _ramda.curry)(parseInt)(_ramda.__, 10);
 var toFloat = (0, _ramda.curry)(parseFloat);
 var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
 var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
