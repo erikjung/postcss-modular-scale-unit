@@ -18,7 +18,6 @@
   "homepage": "https://github.com/erikjung/postcss-modular-scale-unit",
   "main": "dist/index.js",
   "dependencies": {
-    "modular-scale": "^4.4.1",
     "postcss": "^5.0.13",
     "ramda": "^0.19.1"
   },
