@@ -1,7 +1,7 @@
 :root {
-  --modular-scale: 2 1 1.5;
+  --modular-scale: 1.5 1 1.125 1.25;
 }
 
 example {
-  value: 0msu 1msu 2msu 3msu;
+  value: -5msu -4msu -3msu -2msu -1msu 0msu 1msu 2msu 3msu 4msu 5msu;
 }
