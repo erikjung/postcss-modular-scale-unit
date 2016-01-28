@@ -91,17 +91,12 @@ function plugin() {
 
     var bases = _postcss$list$space2.slice(1);
 
-    if ((0, _ramda.contains)('/', ratio)) {
-      ratio = fractionToFloat(ratio);
-    } else {
-      ratio = toFloat(ratio);
-    }
+    ratio = (0, _ramda.ifElse)((0, _ramda.contains)('/'), fractionToFloat, toFloat)(ratio);
 
-    if (!bases.length) {
-      bases.push(1);
-    }
+    bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.pipe)((0, _ramda.map)(toFloat), sortUp), function () {
+      return [1];
+    })(bases);
 
-    bases = (0, _ramda.map)(toFloat, bases);
     msOptions = { bases: bases, ratio: ratio };
   }
 

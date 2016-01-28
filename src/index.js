@@ -8,8 +8,10 @@ import {
   curry,
   divide,
   gt,
+  ifElse,
   invoker,
   is,
+  length,
   map,
   multiply,
   nth,
@@ -84,17 +86,14 @@ function plugin ({ name = 'msu' } = {}) {
   function setOptions (decl) {
     var [ratio, ...bases] = postcss.list.space(decl.value)
 
-    if (contains('/', ratio)) {
-      ratio = fractionToFloat(ratio)
-    } else {
-      ratio = toFloat(ratio)
-    }
+    ratio = ifElse(
+      contains('/'), fractionToFloat, toFloat
+    )(ratio)
 
-    if (!bases.length) {
-      bases.push(1)
-    }
+    bases = ifElse(
+      length, pipe(map(toFloat), sortUp), () => [1]
+    )(bases)
 
-    bases = map(toFloat, bases)
     msOptions = { bases, ratio }
   }
 
