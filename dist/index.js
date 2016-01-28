@@ -23,7 +23,9 @@ var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
 var pow = (0, _ramda.curry)(Math.pow);
 var toInt = (0, _ramda.curry)(parseInt)(_ramda.__, 10);
+var toInts = (0, _ramda.map)(toInt);
 var toFloat = (0, _ramda.curry)(parseFloat);
+var toFloats = (0, _ramda.map)(toFloat);
 var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
 var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
 var sortUp = (0, _ramda.sort)(function (a, b) {
@@ -34,7 +36,7 @@ var isNumber = (0, _ramda.is)(Number);
 var isAboveZero = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 0));
 var isAboveOne = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 1));
 var unnestSort = (0, _ramda.pipe)(_ramda.unnest, sortUp);
-var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toFloat);
+var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), toInts, (0, _ramda.apply)(_ramda.divide), toFloat);
 
 var ModularScale = function ModularScale() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -96,11 +98,22 @@ function plugin() {
 
         var bases = _postcss$list$space2.slice(1);
 
-        ratio = (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat)(ratio);
-        bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.map)(toFloat), function () {
-          return [1];
-        })(bases);
-        msOptions = { bases: bases, ratio: ratio };
+        msOptions = {
+          /**
+           * If `ratio` is a fraction:
+           * convert the fraction to a float,
+           * else, parse the raw value as a float.
+           */
+          ratio: (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat)(ratio),
+          /**
+           * If `bases` has elements:
+           * convert all of them to floats,
+           * else, default to an array of `1`
+           */
+          bases: (0, _ramda.ifElse)(_ramda.length, toFloats, function () {
+            return [1];
+          })(bases)
+        };
       }
     });
 

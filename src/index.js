@@ -28,7 +28,9 @@ const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
 const pow = curry(Math.pow)
 const toInt = curry(parseInt)(__, 10)
+const toInts = map(toInt)
 const toFloat = curry(parseFloat)
+const toFloats = map(toFloat)
 const toFixed = invoker(1, 'toFixed')(3)
 const toFixedFloat = pipe(toFixed, toFloat)
 const sortUp = sort((a, b) => a - b)
@@ -39,7 +41,7 @@ const isAboveOne = both(isNumber, gt(__, 1))
 const unnestSort = pipe(unnest, sortUp)
 const fractionToFloat = pipe(
   split('/'),
-  map(toInt),
+  toInts,
   apply(divide),
   toFloat
 )
@@ -90,9 +92,20 @@ function plugin ({ name = 'msu' } = {}) {
     css.walkDecls(CONFIG_PROPERTY_PATTERN, decl => {
       if (propEq('selector', ':root', decl.parent)) {
         let [ratio, ...bases] = postcss.list.space(decl.value)
-        ratio = ifElse(hasSlash, fractionToFloat, toFloat)(ratio)
-        bases = ifElse(length, map(toFloat), () => [1])(bases)
-        msOptions = { bases, ratio }
+        msOptions = {
+          /**
+           * If `ratio` is a fraction:
+           * convert the fraction to a float,
+           * else, parse the raw value as a float.
+           */
+          ratio: ifElse(hasSlash, fractionToFloat, toFloat)(ratio),
+          /**
+           * If `bases` has elements:
+           * convert all of them to floats,
+           * else, default to an array of `1`
+           */
+          bases: ifElse(length, toFloats, () => [1])(bases)
+        }
       }
     })
 
