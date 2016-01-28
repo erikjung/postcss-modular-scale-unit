@@ -57,9 +57,3 @@ test('Does what the docs show for example', t => {
   var expected = readFile('./docsExample-out.css')
   return run(t, input, expected)
 })
-
-test('Supports legacy config properties', t => {
-  var input = readFile('./legacy-in.css')
-  var expected = readFile('./legacy-out.css')
-  return run(t, input, expected, {}, false)
-})

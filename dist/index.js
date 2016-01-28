@@ -1,7 +1,5 @@
 'use strict';
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -39,7 +37,6 @@ var isAboveZero = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 0));
 var isAboveOne = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 1));
 var isRootSelector = (0, _ramda.propEq)('selector', ':root');
 var unnestSort = (0, _ramda.pipe)(_ramda.unnest, sortUp);
-var parseFloats = (0, _ramda.pipe)((0, _ramda.split)(' '), (0, _ramda.reject)(_ramda.isEmpty), (0, _ramda.map)(toFloat));
 var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toFloat);
 
 var ModularScale = function ModularScale() {
@@ -81,42 +78,10 @@ function plugin() {
   var _ref2$name = _ref2.name;
   var name = _ref2$name === undefined ? 'msu' : _ref2$name;
 
-  var propPattern = new RegExp('^--' + name + '-(\\w+)');
   var msOptions;
   var ms;
 
-  /**
-   * --msu-bases, --msu-ratios
-   */
-
-  function setScaleOptionLegacy(decl) {
-    var _match = (0, _ramda.match)(propPattern, decl.prop);
-
-    var _match2 = _slicedToArray(_match, 2);
-
-    var propKey = _match2[1];
-
-    var ratio;
-    var bases;
-
-    switch (propKey) {
-      case 'ratios':
-        ratio = toFloat(decl.value);
-        break;
-      case 'bases':
-        bases = parseFloats(decl.value);
-        break;
-      default:
-        break;
-    }
-    msOptions = { bases: bases, ratio: ratio };
-  }
-
-  /**
-   * --modular-scale
-   */
-
-  function setScaleOption(decl) {
+  function setOptions(decl) {
     var _postcss$list$space = _postcss2.default.list.space(decl.value);
 
     var _postcss$list$space2 = _toArray(_postcss$list$space);
@@ -141,21 +106,6 @@ function plugin() {
 
   return function (css, result) {
     /**
-     * Extract ratios and bases from custom properties defined on `:root`.
-     * If `--msu-ratios` or `--msu-bases` properties are found, their values
-     * will be used to overwrite the default options for the modular scale.
-     *
-     * TODO: Deprecate support of these properties.
-     */
-
-    css.walkDecls(propPattern, function (decl) {
-      decl.warn(result, 'Setting options via ' + decl.prop + ' will be deprecated soon. Use the --modular-scale property instead.');
-      if (isRootSelector(decl.parent)) {
-        setScaleOptionLegacy(decl);
-      }
-    });
-
-    /**
      * Extract ratios and bases from a custom property defined on `:root`.
      * If `--modular-scale` is found, its value will be used to overwrite
      * the default options for the modular scale.
@@ -163,7 +113,7 @@ function plugin() {
 
     css.walkDecls(CONFIG_PROPERTY_PATTERN, function (decl) {
       if (isRootSelector(decl.parent)) {
-        setScaleOption(decl);
+        setOptions(decl);
       }
     });
 
