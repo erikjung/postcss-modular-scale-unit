@@ -14,24 +14,14 @@ var _ramda = require('ramda');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/**
- * Pattern to match the `--modular-scale` property
- */
+var PLUGIN_NAME = 'postcss-modular-scale-unit';
 var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
-
-/**
- * Pattern to match values for the `--modular-scale` property
- *
- * - Matches <number> ratios: 1.618
- * - Matches <ratio> ratios: 4/3
- * - Matches ratios followed by one <integer> base: 1.618 1
- * - Matches ratios followed by many <integer> bases: 1.618 1 2
- */
-var CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/;
 
 /**
  * Curried Utility Functions
@@ -127,20 +117,25 @@ function plugin() {
    */
 
   function setScaleOption(decl) {
-    var _match3 = (0, _ramda.match)(CONFIG_VALUE_PATTERN, decl.value);
+    var _postcss$list$space = _postcss2.default.list.space(decl.value);
 
-    var _match4 = _slicedToArray(_match3, 3);
+    var _postcss$list$space2 = _toArray(_postcss$list$space);
 
-    var ratio = _match4[1];
-    var _match4$ = _match4[2];
-    var bases = _match4$ === undefined ? '1' : _match4$;
+    var ratio = _postcss$list$space2[0];
+
+    var bases = _postcss$list$space2.slice(1);
 
     if ((0, _ramda.contains)('/', ratio)) {
       ratio = fractionToFloat(ratio);
     } else {
       ratio = toFloat(ratio);
     }
-    bases = parseFloats(bases);
+
+    if (!bases.length) {
+      bases.push(1);
+    }
+
+    bases = (0, _ramda.map)(toFloat, bases);
     msOptions = { bases: bases, ratio: ratio };
   }
 
@@ -185,4 +180,4 @@ function plugin() {
   };
 }
 
-exports.default = _postcss2.default.plugin('postcss-modular-scale-unit', plugin);
+exports.default = _postcss2.default.plugin(PLUGIN_NAME, plugin);

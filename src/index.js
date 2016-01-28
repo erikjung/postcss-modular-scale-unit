@@ -25,21 +25,7 @@ import {
 } from 'ramda'
 
 const PLUGIN_NAME = 'postcss-modular-scale-unit'
-
-/**
- * Pattern to match the `--modular-scale` property
- */
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
-
-/**
- * Pattern to match values for the `--modular-scale` property
- *
- * - Matches <number> ratios: 1.618
- * - Matches <ratio> ratios: 4/3
- * - Matches ratios followed by one <integer> base: 1.618 1
- * - Matches ratios followed by many <integer> bases: 1.618 1 2
- */
-const CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/
 
 /**
  * Curried Utility Functions
@@ -130,14 +116,19 @@ function plugin ({ name = 'msu' } = {}) {
    */
 
   function setScaleOption (decl) {
-    var [, ratio, bases = '1'] = match(CONFIG_VALUE_PATTERN, decl.value)
+    var [ratio, ...bases] = postcss.list.space(decl.value)
 
     if (contains('/', ratio)) {
       ratio = fractionToFloat(ratio)
     } else {
       ratio = toFloat(ratio)
     }
-    bases = parseFloats(bases)
+
+    if (!bases.length) {
+      bases.push(1)
+    }
+
+    bases = map(toFloat, bases)
     msOptions = { bases, ratio }
   }
 
