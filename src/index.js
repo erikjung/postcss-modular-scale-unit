@@ -8,8 +8,10 @@ import {
   curry,
   divide,
   gt,
+  ifElse,
   invoker,
   is,
+  length,
   map,
   multiply,
   nth,
@@ -24,11 +26,8 @@ import {
 const PLUGIN_NAME = 'postcss-modular-scale-unit'
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
-/**
- * Curried Utility Functions
- */
 const pow = curry(Math.pow)
-const toInt = curry(parseInt, __)(10)
+const toInt = curry(parseInt)(__, 10)
 const toFloat = curry(parseFloat)
 const toFixed = invoker(1, 'toFixed')(3)
 const toFixedFloat = pipe(toFixed, toFloat)
@@ -65,7 +64,7 @@ class ModularScale {
       const baseStrands = map(base => {
         const step = pipe(calc, multiply(base))
         return map(i => step(i), range(...intervalRange))
-      }, bases)
+      }, sortUp(bases))
 
       return pipe(
         unnestSort,
@@ -77,50 +76,44 @@ class ModularScale {
 }
 
 function plugin ({ name = 'msu' } = {}) {
+  const valuePattern = new RegExp(`-?\\d+${name}\\b`, 'g')
   var msOptions
   var ms
 
   function setOptions (decl) {
     var [ratio, ...bases] = postcss.list.space(decl.value)
 
-    if (contains('/', ratio)) {
-      ratio = fractionToFloat(ratio)
-    } else {
-      ratio = toFloat(ratio)
-    }
+    ratio = ifElse(
+      contains('/'), fractionToFloat, toFloat
+    )(ratio)
 
-    if (!bases.length) {
-      bases.push(1)
-    }
+    bases = ifElse(
+      length, map(toFloat), () => [1]
+    )(bases)
 
-    bases = map(toFloat, bases)
     msOptions = { bases, ratio }
   }
 
   return (css, result) => {
     /**
-     * Extract ratios and bases from a custom property defined on `:root`.
+     * Extract ratio and base values from a custom property defined on `:root`.
      * If `--modular-scale` is found, its value will be used to overwrite
      * the default options for the modular scale.
      */
-
     css.walkDecls(CONFIG_PROPERTY_PATTERN, decl => {
       if (isRootSelector(decl.parent)) {
         setOptions(decl)
       }
     })
 
-    /**
-     * Initialize the modular scale; replace any CSS values using the supplied
-     * unit with calculated numbers resulting from the scale.
-     */
-
     ms = new ModularScale(msOptions)
 
+    /**
+     * Replace any CSS values using the special unit with numbers resulting from
+     * the modular scale instance.
+     */
     css.replaceValues(
-      new RegExp(`-?\\d+${name}\\b`, 'g'),
-      { fast: name },
-      str => ms(parseInt(str, 10))
+      valuePattern, { fast: name }, str => ms(toInt(str))
     )
   }
 }

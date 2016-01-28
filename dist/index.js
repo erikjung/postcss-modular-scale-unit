@@ -25,7 +25,7 @@ var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
  * Curried Utility Functions
  */
 var pow = (0, _ramda.curry)(Math.pow);
-var toInt = (0, _ramda.curry)(parseInt, _ramda.__)(10);
+var toInt = (0, _ramda.curry)(parseInt)(_ramda.__, 10);
 var toFloat = (0, _ramda.curry)(parseFloat);
 var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
 var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
@@ -66,7 +66,7 @@ var ModularScale = function ModularScale() {
       return (0, _ramda.map)(function (i) {
         return step(i);
       }, _ramda.range.apply(undefined, _toConsumableArray(intervalRange)));
-    }, bases);
+    }, sortUp(bases));
 
     return (0, _ramda.pipe)(unnestSort, (0, _ramda.nth)(interval), toFixedFloat)(baseStrands);
   };
@@ -78,6 +78,7 @@ function plugin() {
   var _ref2$name = _ref2.name;
   var name = _ref2$name === undefined ? 'msu' : _ref2$name;
 
+  var valuePattern = new RegExp('-?\\d+' + name + '\\b', 'g');
   var msOptions;
   var ms;
 
@@ -90,17 +91,12 @@ function plugin() {
 
     var bases = _postcss$list$space2.slice(1);
 
-    if ((0, _ramda.contains)('/', ratio)) {
-      ratio = fractionToFloat(ratio);
-    } else {
-      ratio = toFloat(ratio);
-    }
+    ratio = (0, _ramda.ifElse)((0, _ramda.contains)('/'), fractionToFloat, toFloat)(ratio);
 
-    if (!bases.length) {
-      bases.push(1);
-    }
+    bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.map)(toFloat), function () {
+      return [1];
+    })(bases);
 
-    bases = (0, _ramda.map)(toFloat, bases);
     msOptions = { bases: bases, ratio: ratio };
   }
 
@@ -124,8 +120,8 @@ function plugin() {
 
     ms = new ModularScale(msOptions);
 
-    css.replaceValues(new RegExp('-?\\d+' + name + '\\b', 'g'), { fast: name }, function (str) {
-      return ms(parseInt(str, 10));
+    css.replaceValues(valuePattern, { fast: name }, function (str) {
+      return ms(toInt(str));
     });
   };
 }
