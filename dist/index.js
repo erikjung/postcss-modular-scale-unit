@@ -66,7 +66,7 @@ var ModularScale = function ModularScale() {
       return (0, _ramda.map)(function (i) {
         return step(i);
       }, _ramda.range.apply(undefined, _toConsumableArray(intervalRange)));
-    }, bases);
+    }, sortUp(bases));
 
     return (0, _ramda.pipe)(unnestSort, (0, _ramda.nth)(interval), toFixedFloat)(baseStrands);
   };
@@ -93,7 +93,7 @@ function plugin() {
 
     ratio = (0, _ramda.ifElse)((0, _ramda.contains)('/'), fractionToFloat, toFloat)(ratio);
 
-    bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.pipe)((0, _ramda.map)(toFloat), sortUp), function () {
+    bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.map)(toFloat), function () {
       return [1];
     })(bases);
 

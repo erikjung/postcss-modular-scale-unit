@@ -67,7 +67,7 @@ class ModularScale {
       const baseStrands = map(base => {
         const step = pipe(calc, multiply(base))
         return map(i => step(i), range(...intervalRange))
-      }, bases)
+      }, sortUp(bases))
 
       return pipe(
         unnestSort,
@@ -91,7 +91,7 @@ function plugin ({ name = 'msu' } = {}) {
     )(ratio)
 
     bases = ifElse(
-      length, pipe(map(toFloat), sortUp), () => [1]
+      length, map(toFloat), () => [1]
     )(bases)
 
     msOptions = { bases, ratio }
