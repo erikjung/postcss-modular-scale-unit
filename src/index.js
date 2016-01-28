@@ -32,10 +32,10 @@ const toFloat = curry(parseFloat)
 const toFixed = invoker(1, 'toFixed')(3)
 const toFixedFloat = pipe(toFixed, toFloat)
 const sortUp = sort((a, b) => a - b)
+const hasSlash = contains('/')
 const isNumber = is(Number)
 const isAboveZero = both(isNumber, gt(__, 0))
 const isAboveOne = both(isNumber, gt(__, 1))
-const isRootSelector = propEq('selector', ':root')
 const unnestSort = pipe(unnest, sortUp)
 const fractionToFloat = pipe(
   split('/'),
@@ -77,32 +77,22 @@ class ModularScale {
 
 function plugin ({ name = 'msu' } = {}) {
   const valuePattern = new RegExp(`-?\\d+${name}\\b`, 'g')
-  var msOptions
-  var ms
-
-  function setOptions (decl) {
-    var [ratio, ...bases] = postcss.list.space(decl.value)
-
-    ratio = ifElse(
-      contains('/'), fractionToFloat, toFloat
-    )(ratio)
-
-    bases = ifElse(
-      length, map(toFloat), () => [1]
-    )(bases)
-
-    msOptions = { bases, ratio }
-  }
 
   return (css, result) => {
+    var msOptions
+    var ms
+
     /**
      * Extract ratio and base values from a custom property defined on `:root`.
      * If `--modular-scale` is found, its value will be used to overwrite
      * the default options for the modular scale.
      */
     css.walkDecls(CONFIG_PROPERTY_PATTERN, decl => {
-      if (isRootSelector(decl.parent)) {
-        setOptions(decl)
+      if (propEq('selector', ':root', decl.parent)) {
+        let [ratio, ...bases] = postcss.list.space(decl.value)
+        ratio = ifElse(hasSlash, fractionToFloat, toFloat)(ratio)
+        bases = ifElse(length, map(toFloat), () => [1])(bases)
+        msOptions = { bases, ratio }
       }
     })
 

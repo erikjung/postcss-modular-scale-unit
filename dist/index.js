@@ -21,9 +21,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var PLUGIN_NAME = 'postcss-modular-scale-unit';
 var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
-/**
- * Curried Utility Functions
- */
 var pow = (0, _ramda.curry)(Math.pow);
 var toInt = (0, _ramda.curry)(parseInt)(_ramda.__, 10);
 var toFloat = (0, _ramda.curry)(parseFloat);
@@ -32,10 +29,10 @@ var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
 var sortUp = (0, _ramda.sort)(function (a, b) {
   return a - b;
 });
+var hasSlash = (0, _ramda.contains)('/');
 var isNumber = (0, _ramda.is)(Number);
 var isAboveZero = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 0));
 var isAboveOne = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 1));
-var isRootSelector = (0, _ramda.propEq)('selector', ':root');
 var unnestSort = (0, _ramda.pipe)(_ramda.unnest, sortUp);
 var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), (0, _ramda.map)(toInt), (0, _ramda.apply)(_ramda.divide), toFloat);
 
@@ -79,47 +76,40 @@ function plugin() {
   var name = _ref2$name === undefined ? 'msu' : _ref2$name;
 
   var valuePattern = new RegExp('-?\\d+' + name + '\\b', 'g');
-  var msOptions;
-  var ms;
-
-  function setOptions(decl) {
-    var _postcss$list$space = _postcss2.default.list.space(decl.value);
-
-    var _postcss$list$space2 = _toArray(_postcss$list$space);
-
-    var ratio = _postcss$list$space2[0];
-
-    var bases = _postcss$list$space2.slice(1);
-
-    ratio = (0, _ramda.ifElse)((0, _ramda.contains)('/'), fractionToFloat, toFloat)(ratio);
-
-    bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.map)(toFloat), function () {
-      return [1];
-    })(bases);
-
-    msOptions = { bases: bases, ratio: ratio };
-  }
 
   return function (css, result) {
+    var msOptions;
+    var ms;
+
     /**
-     * Extract ratios and bases from a custom property defined on `:root`.
+     * Extract ratio and base values from a custom property defined on `:root`.
      * If `--modular-scale` is found, its value will be used to overwrite
      * the default options for the modular scale.
      */
-
     css.walkDecls(CONFIG_PROPERTY_PATTERN, function (decl) {
-      if (isRootSelector(decl.parent)) {
-        setOptions(decl);
+      if ((0, _ramda.propEq)('selector', ':root', decl.parent)) {
+        var _postcss$list$space = _postcss2.default.list.space(decl.value);
+
+        var _postcss$list$space2 = _toArray(_postcss$list$space);
+
+        var ratio = _postcss$list$space2[0];
+
+        var bases = _postcss$list$space2.slice(1);
+
+        ratio = (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat)(ratio);
+        bases = (0, _ramda.ifElse)(_ramda.length, (0, _ramda.map)(toFloat), function () {
+          return [1];
+        })(bases);
+        msOptions = { bases: bases, ratio: ratio };
       }
     });
 
-    /**
-     * Initialize the modular scale; replace any CSS values using the supplied
-     * unit with calculated numbers resulting from the scale.
-     */
-
     ms = new ModularScale(msOptions);
 
+    /**
+     * Replace any CSS values using the special unit with numbers resulting from
+     * the modular scale instance.
+     */
     css.replaceValues(valuePattern, { fast: name }, function (str) {
       return ms(toInt(str));
     });
