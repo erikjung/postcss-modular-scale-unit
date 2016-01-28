@@ -78,6 +78,7 @@ function plugin() {
   var _ref2$name = _ref2.name;
   var name = _ref2$name === undefined ? 'msu' : _ref2$name;
 
+  var valuePattern = new RegExp('-?\\d+' + name + '\\b', 'g');
   var msOptions;
   var ms;
 
@@ -124,8 +125,8 @@ function plugin() {
 
     ms = new ModularScale(msOptions);
 
-    css.replaceValues(new RegExp('-?\\d+' + name + '\\b', 'g'), { fast: name }, function (str) {
-      return ms(parseInt(str, 10));
+    css.replaceValues(valuePattern, { fast: name }, function (str) {
+      return ms(toInt(str));
     });
   };
 }

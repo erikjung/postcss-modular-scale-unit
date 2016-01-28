@@ -77,6 +77,7 @@ class ModularScale {
 }
 
 function plugin ({ name = 'msu' } = {}) {
+  const valuePattern = new RegExp(`-?\\d+${name}\\b`, 'g')
   var msOptions
   var ms
 
@@ -118,9 +119,7 @@ function plugin ({ name = 'msu' } = {}) {
     ms = new ModularScale(msOptions)
 
     css.replaceValues(
-      new RegExp(`-?\\d+${name}\\b`, 'g'),
-      { fast: name },
-      str => ms(parseInt(str, 10))
+      valuePattern, { fast: name }, str => ms(toInt(str))
     )
   }
 }
