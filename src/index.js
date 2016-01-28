@@ -1,42 +1,92 @@
 import postcss from 'postcss'
-import ModularScale from 'modular-scale'
-import R, {
+import {
+  __,
+  all,
   apply,
+  both,
   contains,
   curry,
   divide,
+  gt,
+  invoker,
+  is,
+  isEmpty,
   map,
   match,
+  multiply,
+  nth,
   pipe,
+  propEq,
+  range,
+  reject,
+  sort,
   split,
-  toString
+  unnest
 } from 'ramda'
 
-/**
- * Pattern to match values for the `--modular-scale` property
- *
- * - Matches <number> ratios: 1.618
- * - Matches <ratio> ratios: 4/3
- * - Matches ratios followed by one <integer> base: 1.618 1
- * - Matches ratios followed by many <integer> bases: 1.618 1 2
- */
-
-const CONFIG_VALUE_PATTERN = /^((?:\d+[\.|\/])?\d+)(\s(?:\s?\d*\.?\d+)+)?$/
+const PLUGIN_NAME = 'postcss-modular-scale-unit'
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
-const splitOnSpace = split(' ')
-const splitOnSlash = split('/')
-const ratioToDecimal = pipe(
-  splitOnSlash,
-  map(n => parseInt(n, 10)),
+/**
+ * Curried Utility Functions
+ */
+const pow = curry(Math.pow)
+const toInt = curry(parseInt, __)(10)
+const toFloat = curry(parseFloat)
+const toFixed = invoker(1, 'toFixed')(3)
+const toFixedFloat = pipe(toFixed, toFloat)
+const sortUp = sort((a, b) => a - b)
+const isNumber = is(Number)
+const isAboveZero = both(isNumber, gt(__, 0))
+const isAboveOne = both(isNumber, gt(__, 1))
+const isRootSelector = propEq('selector', ':root')
+const unnestSort = pipe(unnest, sortUp)
+const parseFloats = pipe(
+  split(' '),
+  reject(isEmpty),
+  map(toFloat)
+)
+const fractionToFloat = pipe(
+  split('/'),
+  map(toInt),
   apply(divide),
-  curry(n => n.toPrecision(4)),
-  curry(n => parseFloat(n))
+  toFloat
 )
 
+class ModularScale {
+  constructor ({ ratio = 1.618, bases = [1] } = {}) {
+    const calc = pow(ratio)
+
+    if (!isAboveOne(ratio)) {
+      throw new TypeError('"ratio" must be a number greater than 1.')
+    }
+
+    if (!all(isAboveZero, bases)) {
+      throw new TypeError('"bases" must be a list of numbers greater than 0.')
+    }
+
+    return interval => {
+      const intervalRange = sortUp([
+        interval ? interval + Math.sign(interval) : 0,
+        interval ? interval % 1 : 1
+      ])
+      const baseStrands = map(base => {
+        const step = pipe(calc, multiply(base))
+        return map(i => step(i), range(...intervalRange))
+      }, bases)
+
+      return pipe(
+        unnestSort,
+        nth(interval),
+        toFixedFloat
+      )(baseStrands)
+    }
+  }
+}
+
 function plugin ({ name = 'msu' } = {}) {
-  var isRootSelector = R.propEq('selector', ':root')
-  var msOptions = {}
+  const propPattern = new RegExp(`^--${name}-(\\w+)`)
+  var msOptions
   var ms
 
   /**
@@ -44,12 +94,21 @@ function plugin ({ name = 'msu' } = {}) {
    */
 
   function setScaleOptionLegacy (decl) {
-    var propPattern = new RegExp(`^--${name}-(\\w+)`)
-    var [, propKey] = match(propPattern, decl.prop)
+    const [, propKey] = match(propPattern, decl.prop)
+    var ratio
+    var bases
 
-    if (propKey) {
-      msOptions[propKey] = splitOnSpace(decl.value)
+    switch (propKey) {
+      case 'ratios':
+        ratio = toFloat(decl.value)
+        break
+      case 'bases':
+        bases = parseFloats(decl.value)
+        break
+      default:
+        break
     }
+    msOptions = { bases, ratio }
   }
 
   /**
@@ -57,14 +116,20 @@ function plugin ({ name = 'msu' } = {}) {
    */
 
   function setScaleOption (decl) {
-    var [, ratios, bases = '1'] = match(CONFIG_VALUE_PATTERN, decl.value)
+    var [ratio, ...bases] = postcss.list.space(decl.value)
 
-    if (contains('/', ratios)) {
-      ratios = toString(ratioToDecimal(ratios))
+    if (contains('/', ratio)) {
+      ratio = fractionToFloat(ratio)
+    } else {
+      ratio = toFloat(ratio)
     }
-    bases = splitOnSpace(bases)
-    ratios = splitOnSpace(ratios)
-    msOptions = { bases, ratios }
+
+    if (!bases.length) {
+      bases.push(1)
+    }
+
+    bases = map(toFloat, bases)
+    msOptions = { bases, ratio }
   }
 
   return (css, result) => {
@@ -76,7 +141,7 @@ function plugin ({ name = 'msu' } = {}) {
      * TODO: Deprecate support of these properties.
      */
 
-    css.walkDecls(new RegExp(`^--${name}-(\\w+)`), decl => {
+    css.walkDecls(propPattern, decl => {
       decl.warn(result,
         `Setting options via ${decl.prop} will be deprecated soon. Use the --modular-scale property instead.`
       )
@@ -112,4 +177,4 @@ function plugin ({ name = 'msu' } = {}) {
   }
 }
 
-export default postcss.plugin('postcss-modular-scale-unit', plugin)
+export default postcss.plugin(PLUGIN_NAME, plugin)
