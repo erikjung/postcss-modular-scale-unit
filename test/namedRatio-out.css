@@ -1,0 +1,7 @@
+:root {
+  --modular-scale: goldenSection;
+}
+
+example {
+  value: 1.618;
+}

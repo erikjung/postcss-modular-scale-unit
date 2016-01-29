@@ -21,6 +21,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var PLUGIN_NAME = 'postcss-modular-scale-unit';
 var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
 
+var Ratios = {
+  MINOR_SECOND: 1.067,
+  MAJOR_SECOND: 1.125,
+  MINOR_THIRD: 1.2,
+  MAJOR_THIRD: 1.25,
+  PERFECT_FOURTH: 1.333,
+  AUG_FOURTH: 1.414,
+  AUGMENTED_FOURTH: 1.414,
+  DIM_FIFTH: 1.414,
+  DIMINISHED_FIFTH: 1.414,
+  PERFECT_FIFTH: 1.5,
+  MINOR_SIXTH: 1.6,
+  GOLDEN: 1.618,
+  GOLDEN_MEAN: 1.618,
+  GOLDEN_SECTION: 1.618,
+  MAJOR_SIXTH: 1.667,
+  MINOR_SEVENTH: 1.778,
+  MAJOR_SEVENTH: 1.875,
+  OCTAVE: 2,
+  MAJOR_TENTH: 2.5,
+  MAJOR_ELEVENTH: 2.667,
+  MAJOR_TWELFTH: 3,
+  DOUBLE_OCTAVE: 4
+};
+
 var pow = (0, _ramda.curry)(Math.pow);
 var toInt = (0, _ramda.curry)(parseInt)(_ramda.__, 10);
 var toInts = (0, _ramda.map)(toInt);
@@ -28,6 +53,7 @@ var toFloat = (0, _ramda.curry)(parseFloat);
 var toFloats = (0, _ramda.map)(toFloat);
 var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
 var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
+var toLowerWords = (0, _ramda.pipe)(_ramda.toLower, (0, _ramda.replace)(/[\W_]+/g, ''));
 var sortUp = (0, _ramda.sort)(function (a, b) {
   return a - b;
 });
@@ -90,30 +116,42 @@ function plugin() {
      */
     css.walkDecls(CONFIG_PROPERTY_PATTERN, function (decl) {
       if ((0, _ramda.propEq)('selector', ':root', decl.parent)) {
-        var _postcss$list$space = _postcss2.default.list.space(decl.value);
+        (function () {
+          var _postcss$list$space = _postcss2.default.list.space(decl.value);
 
-        var _postcss$list$space2 = _toArray(_postcss$list$space);
+          var _postcss$list$space2 = _toArray(_postcss$list$space);
 
-        var ratio = _postcss$list$space2[0];
+          var ratio = _postcss$list$space2[0];
 
-        var bases = _postcss$list$space2.slice(1);
+          var bases = _postcss$list$space2.slice(1);
 
-        msOptions = {
-          /**
-           * If `ratio` is a fraction:
-           * convert the fraction to a float,
-           * else, parse the raw value as a float.
-           */
-          ratio: (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat)(ratio),
-          /**
-           * If `bases` has elements:
-           * convert all of them to floats,
-           * else, default to an array of `1`
-           */
-          bases: (0, _ramda.ifElse)(_ramda.length, toFloats, function () {
-            return [1];
-          })(bases)
-        };
+          // Search for matching key in Ratios map
+
+          var namedMatch = (0, _ramda.head)((0, _ramda.values)((0, _ramda.pickBy)(function (val, key) {
+            return toLowerWords(key) === toLowerWords(ratio);
+          }, Ratios)));
+
+          console.log(namedMatch);
+
+          ratio = namedMatch || ratio;
+
+          msOptions = {
+            /**
+             * If `ratio` is a fraction:
+             * convert the fraction to a float,
+             * else, parse the raw value as a float.
+             */
+            ratio: (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat)(ratio),
+            /**
+             * If `bases` has elements:
+             * convert all of them to floats,
+             * else, default to an array of `1`
+             */
+            bases: (0, _ramda.ifElse)(_ramda.length, toFloats, function () {
+              return [1];
+            })(bases)
+          };
+        })();
       }
     });
 

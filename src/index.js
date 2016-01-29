@@ -8,6 +8,7 @@ import {
   curry,
   divide,
   gt,
+  head,
   ifElse,
   invoker,
   is,
@@ -15,16 +16,45 @@ import {
   map,
   multiply,
   nth,
+  pickBy,
   pipe,
   propEq,
   range,
+  replace,
   sort,
   split,
-  unnest
+  toLower,
+  unnest,
+  values
 } from 'ramda'
 
 const PLUGIN_NAME = 'postcss-modular-scale-unit'
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
+
+const Ratios = {
+  MINOR_SECOND: 1.067,
+  MAJOR_SECOND: 1.125,
+  MINOR_THIRD: 1.2,
+  MAJOR_THIRD: 1.25,
+  PERFECT_FOURTH: 1.333,
+  AUG_FOURTH: 1.414,
+  AUGMENTED_FOURTH: 1.414,
+  DIM_FIFTH: 1.414,
+  DIMINISHED_FIFTH: 1.414,
+  PERFECT_FIFTH: 1.5,
+  MINOR_SIXTH: 1.6,
+  GOLDEN: 1.618,
+  GOLDEN_MEAN: 1.618,
+  GOLDEN_SECTION: 1.618,
+  MAJOR_SIXTH: 1.667,
+  MINOR_SEVENTH: 1.778,
+  MAJOR_SEVENTH: 1.875,
+  OCTAVE: 2,
+  MAJOR_TENTH: 2.5,
+  MAJOR_ELEVENTH: 2.667,
+  MAJOR_TWELFTH: 3,
+  DOUBLE_OCTAVE: 4
+}
 
 const pow = curry(Math.pow)
 const toInt = curry(parseInt)(__, 10)
@@ -33,6 +63,7 @@ const toFloat = curry(parseFloat)
 const toFloats = map(toFloat)
 const toFixed = invoker(1, 'toFixed')(3)
 const toFixedFloat = pipe(toFixed, toFloat)
+const toLowerWords = pipe(toLower, replace(/[\W_]+/g, ''))
 const sortUp = sort((a, b) => a - b)
 const hasSlash = contains('/')
 const isNumber = is(Number)
@@ -92,6 +123,19 @@ function plugin ({ name = 'msu' } = {}) {
     css.walkDecls(CONFIG_PROPERTY_PATTERN, decl => {
       if (propEq('selector', ':root', decl.parent)) {
         let [ratio, ...bases] = postcss.list.space(decl.value)
+
+        // Search for matching key in Ratios map
+        let namedMatch = head(
+          values(
+            pickBy(
+              (val, key) => toLowerWords(key) === toLowerWords(ratio),
+              Ratios
+            )
+          )
+        )
+
+        ratio = namedMatch || ratio
+
         msOptions = {
           /**
            * If `ratio` is a fraction:
