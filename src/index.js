@@ -1,33 +1,23 @@
 import postcss from 'postcss'
+import ModularScale from './ModularScale'
+
 import {
-  __,
-  all,
-  apply,
-  both,
-  contains,
-  curry,
-  divide,
   evolve,
   find,
-  gt,
   ifElse,
-  invoker,
-  is,
   keys,
   length,
-  map,
-  memoize,
-  multiply,
-  nth,
-  pipe,
-  propEq,
-  range,
-  replace,
-  sort,
-  split,
-  toLower,
-  unnest
+  propEq
 } from 'ramda'
+
+import {
+  toInt,
+  toFloat,
+  toFloats,
+  toLowerWords,
+  hasSlash,
+  fractionToFloat
+} from './utils'
 
 const PLUGIN_NAME = 'postcss-modular-scale-unit'
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
@@ -50,58 +40,6 @@ const Ratios = {
   MAJOR_ELEVENTH: 2.667,
   MAJOR_TWELFTH: 3,
   DOUBLE_OCTAVE: 4
-}
-
-const pow = curry(Math.pow)
-const toInt = curry(parseInt)(__, 10)
-const toInts = map(toInt)
-const toFloat = curry(parseFloat)
-const toFloats = map(toFloat)
-const toFixed = invoker(1, 'toFixed')(3)
-const toFixedFloat = pipe(toFixed, toFloat)
-const toLowerWords = pipe(toLower, replace(/[\W_]+/g, ''))
-const sortUp = sort((a, b) => a - b)
-const hasSlash = contains('/')
-const isNumber = is(Number)
-const isAboveZero = both(isNumber, gt(__, 0))
-const isAboveOne = both(isNumber, gt(__, 1))
-const unnestSort = pipe(unnest, sortUp)
-const fractionToFloat = pipe(
-  split('/'),
-  toInts,
-  apply(divide),
-  toFloat
-)
-
-class ModularScale {
-  constructor ({ ratio = 1.618, bases = [1] } = {}) {
-    const calc = pow(ratio)
-
-    if (!isAboveOne(ratio)) {
-      throw new TypeError('"ratio" must be a number greater than 1.')
-    }
-
-    if (!all(isAboveZero, bases)) {
-      throw new TypeError('"bases" must be a list of numbers greater than 0.')
-    }
-
-    return memoize(interval => {
-      const intervalRange = sortUp([
-        interval ? interval + Math.sign(interval) : 0,
-        interval ? interval % 1 : 1
-      ])
-      const baseStrands = map(base => {
-        const step = pipe(calc, multiply(base))
-        return map(i => step(i), range(...intervalRange))
-      }, sortUp(bases))
-
-      return pipe(
-        unnestSort,
-        nth(interval),
-        toFixedFloat
-      )(baseStrands)
-    })
-  }
 }
 
 function plugin ({ name = 'msu' } = {}) {

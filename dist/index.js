@@ -8,15 +8,17 @@ var _postcss = require('postcss');
 
 var _postcss2 = _interopRequireDefault(_postcss);
 
+var _ModularScale = require('./ModularScale');
+
+var _ModularScale2 = _interopRequireDefault(_ModularScale);
+
 var _ramda = require('ramda');
+
+var _utils = require('./utils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var PLUGIN_NAME = 'postcss-modular-scale-unit';
 var CONFIG_PROPERTY_PATTERN = /^--modular-scale$/;
@@ -41,62 +43,11 @@ var Ratios = {
   DOUBLE_OCTAVE: 4
 };
 
-var pow = (0, _ramda.curry)(Math.pow);
-var toInt = (0, _ramda.curry)(parseInt)(_ramda.__, 10);
-var toInts = (0, _ramda.map)(toInt);
-var toFloat = (0, _ramda.curry)(parseFloat);
-var toFloats = (0, _ramda.map)(toFloat);
-var toFixed = (0, _ramda.invoker)(1, 'toFixed')(3);
-var toFixedFloat = (0, _ramda.pipe)(toFixed, toFloat);
-var toLowerWords = (0, _ramda.pipe)(_ramda.toLower, (0, _ramda.replace)(/[\W_]+/g, ''));
-var sortUp = (0, _ramda.sort)(function (a, b) {
-  return a - b;
-});
-var hasSlash = (0, _ramda.contains)('/');
-var isNumber = (0, _ramda.is)(Number);
-var isAboveZero = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 0));
-var isAboveOne = (0, _ramda.both)(isNumber, (0, _ramda.gt)(_ramda.__, 1));
-var unnestSort = (0, _ramda.pipe)(_ramda.unnest, sortUp);
-var fractionToFloat = (0, _ramda.pipe)((0, _ramda.split)('/'), toInts, (0, _ramda.apply)(_ramda.divide), toFloat);
-
-var ModularScale = function ModularScale() {
+function plugin() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-  var _ref$ratio = _ref.ratio;
-  var ratio = _ref$ratio === undefined ? 1.618 : _ref$ratio;
-  var _ref$bases = _ref.bases;
-  var bases = _ref$bases === undefined ? [1] : _ref$bases;
-
-  _classCallCheck(this, ModularScale);
-
-  var calc = pow(ratio);
-
-  if (!isAboveOne(ratio)) {
-    throw new TypeError('"ratio" must be a number greater than 1.');
-  }
-
-  if (!(0, _ramda.all)(isAboveZero, bases)) {
-    throw new TypeError('"bases" must be a list of numbers greater than 0.');
-  }
-
-  return (0, _ramda.memoize)(function (interval) {
-    var intervalRange = sortUp([interval ? interval + Math.sign(interval) : 0, interval ? interval % 1 : 1]);
-    var baseStrands = (0, _ramda.map)(function (base) {
-      var step = (0, _ramda.pipe)(calc, (0, _ramda.multiply)(base));
-      return (0, _ramda.map)(function (i) {
-        return step(i);
-      }, _ramda.range.apply(undefined, _toConsumableArray(intervalRange)));
-    }, sortUp(bases));
-
-    return (0, _ramda.pipe)(unnestSort, (0, _ramda.nth)(interval), toFixedFloat)(baseStrands);
-  });
-};
-
-function plugin() {
-  var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-  var _ref2$name = _ref2.name;
-  var name = _ref2$name === undefined ? 'msu' : _ref2$name;
+  var _ref$name = _ref.name;
+  var name = _ref$name === undefined ? 'msu' : _ref$name;
 
   var valuePattern = new RegExp('-?\\d+' + name + '\\b', 'g');
 
@@ -121,7 +72,7 @@ function plugin() {
           var bases = _postcss$list$space2.slice(1);
 
           var matchingKey = (0, _ramda.find)(function (val) {
-            return toLowerWords(val) === toLowerWords(ratio);
+            return (0, _utils.toLowerWords)(val) === (0, _utils.toLowerWords)(ratio);
           }, (0, _ramda.keys)(Ratios));
 
           ratio = Ratios[matchingKey] || ratio;
@@ -131,13 +82,13 @@ function plugin() {
              * convert the fraction string to a float,
              * else, parse the raw value as a float.
              */
-            ratio: (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat),
+            ratio: (0, _ramda.ifElse)(_utils.hasSlash, _utils.fractionToFloat, _utils.toFloat),
             /**
              * If `bases` has a length of elements:
              * convert all of them to floats,
              * else, default to an array of `1`
              */
-            bases: (0, _ramda.ifElse)(_ramda.length, toFloats, function () {
+            bases: (0, _ramda.ifElse)(_ramda.length, _utils.toFloats, function () {
               return [1];
             })
           }, {
@@ -148,14 +99,14 @@ function plugin() {
       }
     });
 
-    ms = new ModularScale(msOptions);
+    ms = new _ModularScale2.default(msOptions);
 
     /**
      * Replace any CSS values using the special unit with numbers resulting from
      * the modular scale instance.
      */
     css.replaceValues(valuePattern, { fast: name }, function (str) {
-      return ms(toInt(str));
+      return ms((0, _utils.toInt)(str));
     });
   };
 }

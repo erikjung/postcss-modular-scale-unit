@@ -16,6 +16,9 @@
     "url": "https://github.com/erikjung/postcss-modular-scale-unit/issues"
   },
   "homepage": "https://github.com/erikjung/postcss-modular-scale-unit",
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "dependencies": {
     "postcss": "^5.0.13",
@@ -29,7 +32,7 @@
     "standard": "^5.4.1"
   },
   "scripts": {
-    "build": "babel src/index.js -o dist/index.js",
+    "build": "babel src --out-dir dist",
     "lint": "standard src/index.js",
     "test": "ava test/test.js",
     "prepublish": "npm run build && npm test"
