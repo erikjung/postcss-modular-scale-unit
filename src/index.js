@@ -7,16 +7,18 @@ import {
   contains,
   curry,
   divide,
+  evolve,
+  find,
   gt,
-  head,
   ifElse,
   invoker,
   is,
+  keys,
   length,
   map,
+  memoize,
   multiply,
   nth,
-  pickBy,
   pipe,
   propEq,
   range,
@@ -24,8 +26,7 @@ import {
   sort,
   split,
   toLower,
-  unnest,
-  values
+  unnest
 } from 'ramda'
 
 const PLUGIN_NAME = 'postcss-modular-scale-unit'
@@ -37,14 +38,9 @@ const Ratios = {
   MINOR_THIRD: 1.2,
   MAJOR_THIRD: 1.25,
   PERFECT_FOURTH: 1.333,
-  AUG_FOURTH: 1.414,
   AUGMENTED_FOURTH: 1.414,
-  DIM_FIFTH: 1.414,
-  DIMINISHED_FIFTH: 1.414,
   PERFECT_FIFTH: 1.5,
   MINOR_SIXTH: 1.6,
-  GOLDEN: 1.618,
-  GOLDEN_MEAN: 1.618,
   GOLDEN_SECTION: 1.618,
   MAJOR_SIXTH: 1.667,
   MINOR_SEVENTH: 1.778,
@@ -89,7 +85,7 @@ class ModularScale {
       throw new TypeError('"bases" must be a list of numbers greater than 0.')
     }
 
-    return interval => {
+    return memoize(interval => {
       const intervalRange = sortUp([
         interval ? interval + Math.sign(interval) : 0,
         interval ? interval % 1 : 1
@@ -104,7 +100,7 @@ class ModularScale {
         nth(interval),
         toFixedFloat
       )(baseStrands)
-    }
+    })
   }
 }
 
@@ -124,32 +120,29 @@ function plugin ({ name = 'msu' } = {}) {
       if (propEq('selector', ':root', decl.parent)) {
         let [ratio, ...bases] = postcss.list.space(decl.value)
 
-        // Search for matching key in Ratios map
-        let namedMatch = head(
-          values(
-            pickBy(
-              (val, key) => toLowerWords(key) === toLowerWords(ratio),
-              Ratios
-            )
-          )
+        let matchingKey = find(
+          val => toLowerWords(val) === toLowerWords(ratio),
+          keys(Ratios)
         )
 
-        ratio = namedMatch || ratio
-
-        msOptions = {
+        ratio = Ratios[matchingKey] || ratio
+        msOptions = evolve({
           /**
-           * If `ratio` is a fraction:
-           * convert the fraction to a float,
+           * If `ratio` appears as a fraction string:
+           * convert the fraction string to a float,
            * else, parse the raw value as a float.
            */
-          ratio: ifElse(hasSlash, fractionToFloat, toFloat)(ratio),
+          ratio: ifElse(hasSlash, fractionToFloat, toFloat),
           /**
-           * If `bases` has elements:
+           * If `bases` has a length of elements:
            * convert all of them to floats,
            * else, default to an array of `1`
            */
-          bases: ifElse(length, toFloats, () => [1])(bases)
-        }
+          bases: ifElse(length, toFloats, () => [1])
+        }, {
+          ratio,
+          bases
+        })
       }
     })
 

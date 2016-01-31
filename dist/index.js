@@ -27,14 +27,9 @@ var Ratios = {
   MINOR_THIRD: 1.2,
   MAJOR_THIRD: 1.25,
   PERFECT_FOURTH: 1.333,
-  AUG_FOURTH: 1.414,
   AUGMENTED_FOURTH: 1.414,
-  DIM_FIFTH: 1.414,
-  DIMINISHED_FIFTH: 1.414,
   PERFECT_FIFTH: 1.5,
   MINOR_SIXTH: 1.6,
-  GOLDEN: 1.618,
-  GOLDEN_MEAN: 1.618,
   GOLDEN_SECTION: 1.618,
   MAJOR_SIXTH: 1.667,
   MINOR_SEVENTH: 1.778,
@@ -84,7 +79,7 @@ var ModularScale = function ModularScale() {
     throw new TypeError('"bases" must be a list of numbers greater than 0.');
   }
 
-  return function (interval) {
+  return (0, _ramda.memoize)(function (interval) {
     var intervalRange = sortUp([interval ? interval + Math.sign(interval) : 0, interval ? interval % 1 : 1]);
     var baseStrands = (0, _ramda.map)(function (base) {
       var step = (0, _ramda.pipe)(calc, (0, _ramda.multiply)(base));
@@ -94,7 +89,7 @@ var ModularScale = function ModularScale() {
     }, sortUp(bases));
 
     return (0, _ramda.pipe)(unnestSort, (0, _ramda.nth)(interval), toFixedFloat)(baseStrands);
-  };
+  });
 };
 
 function plugin() {
@@ -125,32 +120,30 @@ function plugin() {
 
           var bases = _postcss$list$space2.slice(1);
 
-          // Search for matching key in Ratios map
+          var matchingKey = (0, _ramda.find)(function (val) {
+            return toLowerWords(val) === toLowerWords(ratio);
+          }, (0, _ramda.keys)(Ratios));
 
-          var namedMatch = (0, _ramda.head)((0, _ramda.values)((0, _ramda.pickBy)(function (val, key) {
-            return toLowerWords(key) === toLowerWords(ratio);
-          }, Ratios)));
-
-          console.log(namedMatch);
-
-          ratio = namedMatch || ratio;
-
-          msOptions = {
+          ratio = Ratios[matchingKey] || ratio;
+          msOptions = (0, _ramda.evolve)({
             /**
-             * If `ratio` is a fraction:
-             * convert the fraction to a float,
+             * If `ratio` appears as a fraction string:
+             * convert the fraction string to a float,
              * else, parse the raw value as a float.
              */
-            ratio: (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat)(ratio),
+            ratio: (0, _ramda.ifElse)(hasSlash, fractionToFloat, toFloat),
             /**
-             * If `bases` has elements:
+             * If `bases` has a length of elements:
              * convert all of them to floats,
              * else, default to an array of `1`
              */
             bases: (0, _ramda.ifElse)(_ramda.length, toFloats, function () {
               return [1];
-            })(bases)
-          };
+            })
+          }, {
+            ratio: ratio,
+            bases: bases
+          });
         })();
       }
     });
