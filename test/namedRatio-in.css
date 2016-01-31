@@ -1,5 +1,5 @@
 :root {
-  --modular-scale: 4/3 1;
+  --modular-scale: goldenSection;
 }
 
 example {

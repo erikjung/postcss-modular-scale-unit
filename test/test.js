@@ -28,6 +28,12 @@ test('Works with a supplied ratio', t => {
   return run(t, input, expected)
 })
 
+test('Works with named ratios', t => {
+  var input = readFile('./namedRatio-in.css')
+  var expected = readFile('./namedRatio-out.css')
+  return run(t, input, expected)
+})
+
 test('Works with multiple bases and values', t => {
   var input = readFile('./multiple-in.css')
   var expected = readFile('./multiple-out.css')

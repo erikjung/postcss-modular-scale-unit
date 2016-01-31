@@ -1,108 +1,86 @@
 import postcss from 'postcss'
+import ModularScale from './ModularScale'
+
 import {
-  __,
-  all,
-  apply,
-  both,
-  contains,
-  curry,
-  divide,
-  gt,
+  evolve,
+  find,
   ifElse,
-  invoker,
-  is,
+  keys,
   length,
-  map,
-  multiply,
-  nth,
-  pipe,
-  propEq,
-  range,
-  sort,
-  split,
-  unnest
+  propEq
 } from 'ramda'
+
+import {
+  toInt,
+  toFloat,
+  toFloats,
+  toLowerWords,
+  hasSlash,
+  fractionToFloat
+} from './utils'
 
 const PLUGIN_NAME = 'postcss-modular-scale-unit'
 const CONFIG_PROPERTY_PATTERN = /^--modular-scale$/
 
-const pow = curry(Math.pow)
-const toInt = curry(parseInt)(__, 10)
-const toFloat = curry(parseFloat)
-const toFixed = invoker(1, 'toFixed')(3)
-const toFixedFloat = pipe(toFixed, toFloat)
-const sortUp = sort((a, b) => a - b)
-const isNumber = is(Number)
-const isAboveZero = both(isNumber, gt(__, 0))
-const isAboveOne = both(isNumber, gt(__, 1))
-const isRootSelector = propEq('selector', ':root')
-const unnestSort = pipe(unnest, sortUp)
-const fractionToFloat = pipe(
-  split('/'),
-  map(toInt),
-  apply(divide),
-  toFloat
-)
-
-class ModularScale {
-  constructor ({ ratio = 1.618, bases = [1] } = {}) {
-    const calc = pow(ratio)
-
-    if (!isAboveOne(ratio)) {
-      throw new TypeError('"ratio" must be a number greater than 1.')
-    }
-
-    if (!all(isAboveZero, bases)) {
-      throw new TypeError('"bases" must be a list of numbers greater than 0.')
-    }
-
-    return interval => {
-      const intervalRange = sortUp([
-        interval ? interval + Math.sign(interval) : 0,
-        interval ? interval % 1 : 1
-      ])
-      const baseStrands = map(base => {
-        const step = pipe(calc, multiply(base))
-        return map(i => step(i), range(...intervalRange))
-      }, sortUp(bases))
-
-      return pipe(
-        unnestSort,
-        nth(interval),
-        toFixedFloat
-      )(baseStrands)
-    }
-  }
+const Ratios = {
+  MINOR_SECOND: 1.067,
+  MAJOR_SECOND: 1.125,
+  MINOR_THIRD: 1.2,
+  MAJOR_THIRD: 1.25,
+  PERFECT_FOURTH: 1.333,
+  AUGMENTED_FOURTH: 1.414,
+  PERFECT_FIFTH: 1.5,
+  MINOR_SIXTH: 1.6,
+  GOLDEN_SECTION: 1.618,
+  MAJOR_SIXTH: 1.667,
+  MINOR_SEVENTH: 1.778,
+  MAJOR_SEVENTH: 1.875,
+  OCTAVE: 2,
+  MAJOR_TENTH: 2.5,
+  MAJOR_ELEVENTH: 2.667,
+  MAJOR_TWELFTH: 3,
+  DOUBLE_OCTAVE: 4
 }
 
 function plugin ({ name = 'msu' } = {}) {
   const valuePattern = new RegExp(`-?\\d+${name}\\b`, 'g')
-  var msOptions
-  var ms
-
-  function setOptions (decl) {
-    var [ratio, ...bases] = postcss.list.space(decl.value)
-
-    ratio = ifElse(
-      contains('/'), fractionToFloat, toFloat
-    )(ratio)
-
-    bases = ifElse(
-      length, map(toFloat), () => [1]
-    )(bases)
-
-    msOptions = { bases, ratio }
-  }
 
   return (css, result) => {
+    var msOptions
+    var ms
+
     /**
      * Extract ratio and base values from a custom property defined on `:root`.
      * If `--modular-scale` is found, its value will be used to overwrite
      * the default options for the modular scale.
      */
     css.walkDecls(CONFIG_PROPERTY_PATTERN, decl => {
-      if (isRootSelector(decl.parent)) {
-        setOptions(decl)
+      if (propEq('selector', ':root', decl.parent)) {
+        let [ratio, ...bases] = postcss.list.space(decl.value)
+
+        let matchingKey = find(
+          val => toLowerWords(val) === toLowerWords(ratio),
+          keys(Ratios)
+        )
+
+        ratio = Ratios[matchingKey] || ratio
+        msOptions = evolve({
+          /**
+           * If `ratio` appears as a fraction string:
+           * convert the fraction string to a float,
+           * else, parse the raw value as a float.
+           */
+          ratio: ifElse(hasSlash, fractionToFloat, toFloat),
+          /**
+           * If `bases` has a length of elements:
+           * convert all of them to floats,
+           * else, default to an array of `1`
+           */
+          bases: ifElse(length, toFloats, () => [1])
+        }, {
+          ratio,
+          bases
+        })
       }
     })
 
