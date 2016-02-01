@@ -1,4 +1,5 @@
 import fs from 'fs'
+import ModularScale from '../dist/ModularScale'
 import plugin from '../'
 import postcss from 'postcss'
 import test from 'ava'
@@ -15,6 +16,65 @@ function run (t, input, output, opts = {}, strict = true) {
 function readFile (path) {
   return fs.readFileSync(path, 'utf8')
 }
+
+test('ModularScale default options', t => {
+  var ms = new ModularScale()
+  t.plan(3)
+  t.same(ms(-1), 0.618)
+  t.same(ms(0), 1)
+  t.same(ms(1), 1.618)
+})
+
+test('ModularScale supplied ratio', t => {
+  var ms = new ModularScale({ ratio: 1.5 })
+  t.plan(3)
+  t.same(ms(-1), 0.667)
+  t.same(ms(0), 1)
+  t.same(ms(1), 1.5)
+})
+
+test('ModularScale supplied ratio and multiple bases', t => {
+  var ms = new ModularScale({ ratio: 1.5, bases: [1, 1.25] })
+  t.plan(5)
+  t.same(ms(-2), 0.667)
+  t.same(ms(-1), 0.833)
+  t.same(ms(0), 1)
+  t.same(ms(1), 1.25)
+  t.same(ms(2), 1.5)
+})
+
+test('ModularScale errors with bad ratio', t => {
+  t.plan(2)
+  t.throws(
+    () => new ModularScale({ ratio: 'foo' }),
+    TypeError,
+    'Throws TypeError when ratio is not a number'
+  )
+  t.throws(
+    () => new ModularScale({ ratio: 1 }),
+    TypeError,
+    'Throws TypeError when ratio is not greater than 1'
+  )
+})
+
+test('ModularScale errors with bad bases', t => {
+  t.plan(3)
+  t.throws(
+    () => new ModularScale({ bases: 'foo' }),
+    TypeError,
+    'Throws TypeError when bases is not an array'
+  )
+  t.throws(
+    () => new ModularScale({ bases: ['a', 1] }),
+    TypeError,
+    'Throws TypeError when bases contains a non-number'
+  )
+  t.throws(
+    () => new ModularScale({ bases: [0, 1] }),
+    TypeError,
+    'Throws TypeError when bases contains a number not greater than 0'
+  )
+})
 
 test('Works with a default ratio', t => {
   var input = readFile('./default-in.css')
