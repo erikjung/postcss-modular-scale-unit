@@ -34,9 +34,9 @@
   },
   "scripts": {
     "build": "babel src --out-dir dist",
-    "lint": "standard src/index.js",
-    "test": "ava test/test.js",
-    "prepublish": "npm run build && npm test"
+    "lint": "standard src/*.js",
+    "test": "npm run lint && npm run build && ava test/test.js",
+    "prepublish": "npm test"
   },
   "standard": {
     "parser": "babel-eslint"
