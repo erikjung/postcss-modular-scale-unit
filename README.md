@@ -23,9 +23,7 @@ This plugin transforms CSS declaration values using a custom `msu` unit. Instanc
 npm install postcss-modular-scale-unit
 ```
 
-## Examples
-
-### Setup
+## Setup
 
 The **ratio** and **base** parameters of your modular scale can be supplied with the `--modular-scale` custom property:
 
@@ -55,8 +53,11 @@ The following are all equivalent:
 }
 ```
 
+## Using the custom unit
 
-### Example input and output
+With the `--modular-scale` property set, simply append the custom unit to positive or negative integers that correlate with the steps of your scale. The output will be a plain number.
+
+**Input:**
 
 ```css
 :root {
@@ -70,7 +71,7 @@ The following are all equivalent:
 }
 ```
 
-Produces:
+**Output:**
 
 ```css
 .Example {
@@ -82,7 +83,7 @@ Produces:
 
 If needed, see [postcss-cssnext] or [postcss-calc] for `calc()` handling.
 
-## Usage
+## PostCSS integration
 
 ```js
 var fs = require('fs')
