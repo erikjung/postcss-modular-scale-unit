@@ -4,7 +4,6 @@
 [npm]: https://www.npmjs.com/package/postcss-modular-scale-unit
 [PostCSS]: https://github.com/postcss/postcss
 [PostCSS usage docs]: https://github.com/postcss/postcss#usage
-
 [modular-scale]: https://github.com/kristoferjoseph/modular-scale
 [postcss-modular-scale]: https://github.com/kristoferjoseph/postcss-modular-scale
 [postcss-vertical-rhythm]: https://github.com/markgoodyear/postcss-vertical-rhythm
@@ -28,54 +27,56 @@ npm install postcss-modular-scale-unit
 
 ### Setup
 
-The **ratio** and **base** parameters of your modular scale can be supplied with the `--modular-scale` custom property. This property acts as a shorthand, accepting values in this order:
+The **ratio** and **base** parameters of your modular scale can be supplied with the `--modular-scale` custom property:
 
+```
+--modular-scale: [ratio] [...bases]
+```
 
-0. **ratio:** a decimal or fraction greater than 1
-0. **base:** (optional) one or more positive numbers, defaulting to `1` if omitted
+**Ratio** can be supplied as a:
+- number greater than one (for example, `1.5`)
+- fraction greater than one (for example, `3/2`)
+- keyword alias (for example, `perfectfifth`)
+
+The following are all equivalent:
+```css
+:root {
+  --modular-scale: 1.5;
+  --modular-scale: 3/2;
+  --modular-scale: perfectfifth;
+}
+```
+
+**Bases** are optional, and can be supplied as one or more numbers greater than or equal to one, defaulting to `1` when omitted. The following results in a scale that looks like [this](http://www.modularscale.com/?1,1.125,1.25&em&1.5&web&text):
 
 ```css
 :root {
-  /* Just a ratio of 1.5 */
-  --modular-scale: 1.5;
-
-  /* Same as above, but as a fraction */
-  --modular-scale: 3/2;
-
-  /* Ratio of 1.5 with bases of 1 and 1.25 */
-  --modular-scale: 1.5 1 1.25;
+  --modular-scale: perfectfifth 1 1.125 1.25;
 }
 ```
 
-### Input
+
+### Example input and output
 
 ```css
+:root {
+  --modular-scale: 3/2;
+}
+
 .Example {
   line-height: 1msu;
-}
-
-.Example {
-  width: calc(-2msu * 100%);
-}
-
-.Example {
-  font-size: calc(2msu * 1em);
+  font-size: calc(1msu * 1em);
+  width: calc(-1msu * 100%);
 }
 ```
 
-### Output
+Produces:
 
 ```css
 .Example {
   line-height: 1.5;
-}
-
-.Example {
-  width: calc(0.444 * 100%);
-}
-
-.Example {
-  font-size: calc(2.25 * 1em);
+  font-size: calc(1.5 * 1em);
+  width: calc(0.667 * 100%);
 }
 ```
 
