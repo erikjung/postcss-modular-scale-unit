@@ -1,15 +1,9 @@
 :root {
-  --modular-scale: 1.5;
+  --modular-scale: 3/2;
 }
 
 .Example {
   line-height: 1msu;
-}
-
-.Example {
-  width: calc(-2msu * 100%);
-}
-
-.Example {
-  font-size: calc(2msu * 1em);
+  font-size: calc(1msu * 1em);
+  width: calc(-1msu * 100%);
 }
