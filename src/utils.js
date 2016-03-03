@@ -6,7 +6,6 @@ import {
   curry,
   divide,
   gt,
-  invoker,
   is,
   map,
   pipe,
@@ -22,8 +21,6 @@ export const toInt = curry(parseInt)(__, 10)
 export const toInts = map(toInt)
 export const toFloat = curry(parseFloat)
 export const toFloats = map(toFloat)
-export const toFixed = invoker(1, 'toFixed')(3)
-export const toFixedFloat = pipe(toFixed, toFloat)
 export const toLowerWords = pipe(toLower, replace(/[\W_]+/g, ''))
 export const sortUp = sort((a, b) => a - b)
 export const hasSlash = contains('/')

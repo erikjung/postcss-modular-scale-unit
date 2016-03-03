@@ -42,11 +42,11 @@ const Ratios = {
   DOUBLE_OCTAVE: 4
 }
 
-function plugin ({ name = 'msu' } = {}) {
+function plugin ({ name = 'msu', precision = 3 } = {}) {
   const valuePattern = new RegExp(`-?\\d+${name}\\b`, 'g')
 
   return (css, result) => {
-    var msOptions
+    const msOptions = { precision }
     var ms
 
     /**
@@ -64,7 +64,7 @@ function plugin ({ name = 'msu' } = {}) {
         )
 
         ratio = Ratios[matchingKey] || ratio
-        msOptions = evolve({
+        Object.assign(msOptions, evolve({
           /**
            * If `ratio` appears as a fraction string:
            * convert the fraction string to a float,
@@ -80,7 +80,7 @@ function plugin ({ name = 'msu' } = {}) {
         }, {
           ratio,
           bases
-        })
+        }))
       }
     })
 

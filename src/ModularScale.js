@@ -1,7 +1,10 @@
 import {
   all,
+  invoker,
   map,
+  max,
   memoize,
+  min,
   multiply,
   nth,
   pipe,
@@ -13,13 +16,17 @@ import {
   isAboveZero,
   pow,
   sortUp,
-  toFixedFloat,
+  toFloat,
   unnestSort
 } from './utils'
 
+const toValidPrecision = pipe(max(0), min(20))
+
 export default class ModularScale {
-  constructor ({ ratio = 1.618, bases = [1] } = {}) {
+  constructor ({ ratio = 1.618, bases = [1], precision = 3 } = {}) {
     const calc = pow(ratio)
+    const toFixed = invoker(1, 'toFixed')(toValidPrecision(precision))
+    const toFixedFloat = pipe(toFixed, toFloat)
 
     if (!isAboveOne(ratio)) {
       throw new TypeError('"ratio" must be a number greater than 1.')
