@@ -42,7 +42,7 @@ const Ratios = {
   DOUBLE_OCTAVE: 4
 }
 
-function plugin ({ name = 'msu' } = {}) {
+function plugin ({ name = 'msu', precision = 3 } = {}) {
   const valuePattern = new RegExp(`-?\\d+${name}\\b`, 'g')
 
   return (css, result) => {
@@ -79,7 +79,8 @@ function plugin ({ name = 'msu' } = {}) {
           bases: ifElse(length, toFloats, () => [1])
         }, {
           ratio,
-          bases
+          bases,
+          precision
         })
       }
     })

@@ -43,6 +43,12 @@ test('ModularScale supplied ratio and multiple bases', t => {
   t.same(ms(2), 1.5)
 })
 
+test('ModularScale supplied precision', t => {
+  var ms = new ModularScale({ ratio: 1.5, precision: 4 })
+  t.plan(1)
+  t.same(ms(5), 7.5938)
+})
+
 test('ModularScale errors with bad ratio', t => {
   t.plan(2)
   t.throws(
@@ -116,6 +122,12 @@ test('Works with a custom unit name', t => {
   var input = readFile('./customName-in.css')
   var expected = readFile('./customName-out.css')
   return run(t, input, expected, { name: 'mods' })
+})
+
+test('Works with precision override', t => {
+  var input = readFile('./customPrec-in.css')
+  var expected = readFile('./customPrec-out.css')
+  return run(t, input, expected, { precision: 4 })
 })
 
 test('Does what the docs show for example', t => {
