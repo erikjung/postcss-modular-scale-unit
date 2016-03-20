@@ -1,0 +1,7 @@
+:root {
+  --modular-scale: 1.125 1 1.225;
+}
+
+example {
+  value: -3msu, -2msu, -1msu, 0msu, 1msu, 2msu, 3msu;
+}

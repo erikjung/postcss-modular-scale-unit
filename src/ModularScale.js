@@ -1,56 +1,51 @@
-import {
-  all,
-  invoker,
-  map,
-  max,
-  memoize,
-  min,
-  multiply,
-  nth,
-  pipe,
-  range
-} from 'ramda'
-
-import {
-  isAboveOne,
-  isAboveZero,
-  pow,
-  sortUp,
-  toFloat,
-  unnestSort
-} from './utils'
-
-const toValidPrecision = pipe(max(0), min(20))
+const isNum = n => n.constructor === Number
+const isAbove = (n1, n2) => n2 > n1
+const isAboveOne = n => isNum(n) && isAbove(1, n)
+const isAboveZero = n => isNum(n) && isAbove(0, n)
 
 export default class ModularScale {
-  constructor ({ ratio = 1.618, bases = [1], precision = 3 } = {}) {
-    const calc = pow(ratio)
-    const toFixed = invoker(1, 'toFixed')(toValidPrecision(precision))
-    const toFixedFloat = pipe(toFixed, toFloat)
+  constructor ({
+    ratio = 1.618,
+    bases = [1],
+    precision = 3
+  } = {}) {
+    function scaleNum (n1, n2) {
+      return parseFloat(
+        (Math.pow(ratio, n1) * n2).toFixed(precision)
+      )
+    }
 
     if (!isAboveOne(ratio)) {
       throw new TypeError('"ratio" must be a number greater than 1.')
     }
 
-    if (!all(isAboveZero, bases)) {
+    if (!bases.every(isAboveZero)) {
       throw new TypeError('"bases" must be a list of numbers greater than 0.')
     }
 
-    return memoize(interval => {
-      const intervalRange = sortUp([
-        interval ? interval + Math.sign(interval) : 0,
-        interval ? interval % 1 : 1
-      ])
-      const baseStrands = map(base => {
-        const step = pipe(calc, multiply(base))
-        return map(i => step(i), range(...intervalRange))
-      }, sortUp(bases))
+    return function (int) {
+      const IS_NEG = Math.sign(int) === -1
+      const numSet = new Set()
+      const baseCount = bases.length
+      const countRange = Math.abs(int - int * -1)
+      var count = countRange
+      var results
 
-      return pipe(
-        unnestSort,
-        nth(interval),
-        toFixedFloat
-      )(baseStrands)
-    })
+      bases.sort((a, b) => a - b)
+
+      while (count >= countRange * -1) {
+        for (let baseIndex = 0; baseIndex < baseCount; baseIndex++) {
+          numSet.add(scaleNum(count, bases[baseIndex]))
+        }
+        count--
+      }
+
+      results = Array.from(numSet)
+
+      results.sort((a, b) => IS_NEG ? b - a : a - b)
+      results.splice(0, results.indexOf(bases[0]))
+
+      return results[Math.abs(int)]
+    }
   }
 }
