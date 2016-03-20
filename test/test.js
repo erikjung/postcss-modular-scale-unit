@@ -82,6 +82,20 @@ test('ModularScale errors with bad bases', t => {
   )
 })
 
+test('ModularScale with ratio smaller than base (issue #15)', t => {
+  var ms = new ModularScale({ ratio: 1.125, bases: [1, 1.225] })
+  t.plan(2)
+  t.same(ms(-1), 0.968)
+  t.same(ms(1), 1.089)
+})
+
+test('ModularScale with bases out of order', t => {
+  var ms = new ModularScale({ ratio: 1.125, bases: [1.225, 1] })
+  t.plan(2)
+  t.same(ms(-1), 0.968)
+  t.same(ms(1), 1.089)
+})
+
 test('Works with a default ratio', t => {
   var input = readFile('./default-in.css')
   var expected = readFile('./default-out.css')
@@ -103,6 +117,12 @@ test('Works with named ratios', t => {
 test('Works with multiple bases and values', t => {
   var input = readFile('./multiple-in.css')
   var expected = readFile('./multiple-out.css')
+  return run(t, input, expected)
+})
+
+test('Works with bases larger than ratios (issue #15)', t => {
+  var input = readFile('./basesLarger-in.css')
+  var expected = readFile('./basesLarger-out.css')
   return run(t, input, expected)
 })
 
