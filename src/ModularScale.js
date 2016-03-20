@@ -27,9 +27,9 @@ export default class ModularScale {
       const IS_NEG = Math.sign(int) === -1
       const numSet = new Set()
       const baseCount = bases.length
-      const countRange = Math.abs(int - int * -1)
+      const countRange = Math.abs(int) + 1
       const results = []
-      var count = countRange
+      var count = countRange - 1
 
       bases.sort((a, b) => a - b)
 

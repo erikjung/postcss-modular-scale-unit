@@ -36,11 +36,18 @@ test('ModularScale supplied ratio', t => {
 test('ModularScale supplied ratio and multiple bases', t => {
   var ms = new ModularScale({ ratio: 1.5, bases: [1, 1.25] })
   t.plan(5)
-  t.same(ms(-2), 0.667)
+  t.same(ms(-6), 0.296)
   t.same(ms(-1), 0.833)
   t.same(ms(0), 1)
   t.same(ms(1), 1.25)
-  t.same(ms(2), 1.5)
+  t.same(ms(6), 3.375)
+})
+
+test('ModularScale with extreme values', t => {
+  var ms = new ModularScale({ ratio: 1.5 })
+  t.plan(2)
+  t.same(ms(-6), 0.088)
+  t.same(ms(16), 656.841)
 })
 
 test('ModularScale supplied precision', t => {
