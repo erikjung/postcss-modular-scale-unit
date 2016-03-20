@@ -28,8 +28,8 @@ export default class ModularScale {
       const numSet = new Set()
       const baseCount = bases.length
       const countRange = Math.abs(int - int * -1)
+      const results = []
       var count = countRange
-      var results
 
       bases.sort((a, b) => a - b)
 
@@ -40,8 +40,7 @@ export default class ModularScale {
         count--
       }
 
-      results = Array.from(numSet)
-
+      numSet.forEach(num => results.push(num))
       results.sort((a, b) => IS_NEG ? b - a : a - b)
       results.splice(0, results.indexOf(bases[0]))
 
