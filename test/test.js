@@ -1,4 +1,5 @@
 import fs from 'fs'
+import path from 'path'
 import ModularScale from '../dist/ModularScale'
 import plugin from '../'
 import postcss from 'postcss'
@@ -8,52 +9,52 @@ function run (t, input, output, opts = {}, strict = true) {
   return postcss([plugin(opts)])
     .process(input)
     .then(result => {
-      t.same(result.css, output)
-      if (strict) t.same(result.warnings().length, 0)
+      t.deepEqual(result.css, output)
+      if (strict) t.deepEqual(result.warnings().length, 0)
     })
 }
 
-function readFile (path) {
-  return fs.readFileSync(path, 'utf8')
+function readFile (file) {
+  return fs.readFileSync(path.resolve(__dirname, file), 'utf8')
 }
 
 test('ModularScale default options', t => {
   var ms = new ModularScale()
   t.plan(3)
-  t.same(ms(-1), 0.618)
-  t.same(ms(0), 1)
-  t.same(ms(1), 1.618)
+  t.deepEqual(ms(-1), 0.618)
+  t.deepEqual(ms(0), 1)
+  t.deepEqual(ms(1), 1.618)
 })
 
 test('ModularScale supplied ratio', t => {
   var ms = new ModularScale({ ratio: 1.5 })
   t.plan(3)
-  t.same(ms(-1), 0.667)
-  t.same(ms(0), 1)
-  t.same(ms(1), 1.5)
+  t.deepEqual(ms(-1), 0.667)
+  t.deepEqual(ms(0), 1)
+  t.deepEqual(ms(1), 1.5)
 })
 
 test('ModularScale supplied ratio and multiple bases', t => {
   var ms = new ModularScale({ ratio: 1.5, bases: [1, 1.25] })
   t.plan(5)
-  t.same(ms(-6), 0.296)
-  t.same(ms(-1), 0.833)
-  t.same(ms(0), 1)
-  t.same(ms(1), 1.25)
-  t.same(ms(6), 3.375)
+  t.deepEqual(ms(-6), 0.296)
+  t.deepEqual(ms(-1), 0.833)
+  t.deepEqual(ms(0), 1)
+  t.deepEqual(ms(1), 1.25)
+  t.deepEqual(ms(6), 3.375)
 })
 
 test('ModularScale with extreme values', t => {
   var ms = new ModularScale({ ratio: 1.5 })
   t.plan(2)
-  t.same(ms(-6), 0.088)
-  t.same(ms(16), 656.841)
+  t.deepEqual(ms(-6), 0.088)
+  t.deepEqual(ms(16), 656.841)
 })
 
 test('ModularScale supplied precision', t => {
   var ms = new ModularScale({ ratio: 1.5, precision: 4 })
   t.plan(1)
-  t.same(ms(5), 7.5938)
+  t.deepEqual(ms(5), 7.5938)
 })
 
 test('ModularScale errors with bad ratio', t => {
@@ -92,15 +93,15 @@ test('ModularScale errors with bad bases', t => {
 test('ModularScale with ratio smaller than base (issue #15)', t => {
   var ms = new ModularScale({ ratio: 1.125, bases: [1, 1.225] })
   t.plan(2)
-  t.same(ms(-1), 0.968)
-  t.same(ms(1), 1.089)
+  t.deepEqual(ms(-1), 0.968)
+  t.deepEqual(ms(1), 1.089)
 })
 
 test('ModularScale with bases out of order', t => {
   var ms = new ModularScale({ ratio: 1.125, bases: [1.225, 1] })
   t.plan(2)
-  t.same(ms(-1), 0.968)
-  t.same(ms(1), 1.089)
+  t.deepEqual(ms(-1), 0.968)
+  t.deepEqual(ms(1), 1.089)
 })
 
 test('Works with a default ratio', t => {
